@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Persistencia Digital — Mapping de Fachada</title>
+<link rel="icon" type="image/webp" href="assets/isotipo.webp" />
+<meta name="description" content="Simulación interactiva de video mapping sobre una fachada 3D." />
+<!-- seo-preciso -->
+<link rel="canonical" href="https://persistenciadigital.com/fachada.html" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Persistencia Digital" />
+<meta property="og:title" content="Persistencia Digital — Mapping de Fachada" />
+<meta property="og:description" content="Simulación interactiva de video mapping sobre una fachada 3D." />
+<meta property="og:url" content="https://persistenciadigital.com/fachada.html" />
+<meta property="og:image" content="https://persistenciadigital.com/assets/og/fachada.jpg" />
+<meta property="og:image:secure_url" content="https://persistenciadigital.com/assets/og/fachada.jpg" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="1080" />
+<meta property="og:image:height" content="1080" />
+<meta property="og:locale" content="es_CO" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Persistencia Digital — Mapping de Fachada" />
+<meta name="twitter:description" content="Simulación interactiva de video mapping sobre una fachada 3D." />
+<meta name="twitter:image" content="https://persistenciadigital.com/assets/og/fachada.jpg" />
+<!-- /seo-preciso -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/pd-ui.css" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: #030304; font-family: 'Inter', system-ui, sans-serif; }
+  #scene { position: fixed; inset: 0; cursor: grab; }
+  .brand-bar { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 30; background: var(--grad); }
+  /* debajo de la barra superior, para no chocar con las miniaturas */
+  .title { position: fixed; top: 76px; left: 0; right: 0; text-align: center; z-index: 20; pointer-events: none; padding: 0 16px; }
+  .title h1 { color: var(--fg); font-size: clamp(17px, 2.4vw, 24px); font-weight: 700; letter-spacing: -0.015em; text-shadow: 0 2px 24px rgba(0,0,0,0.9); }
+  .title p { color: var(--fg-muted); font-size: 13.5px; margin-top: 5px; text-shadow: 0 1px 14px rgba(0,0,0,0.9); }
+  .hud { position: fixed; bottom: 22px; left: 0; right: 0; z-index: 20; display: flex; justify-content: center; }
+  /* barra superior: volver a la izquierda, saltar a otra experiencia a la derecha */
+  .barra-top {
+    position: fixed; top: 12px; left: 0; right: 0; z-index: 25;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 0 14px; pointer-events: none;
+  }
+  .barra-top > * { pointer-events: auto; }
+  a.back {
+    text-decoration: none; flex-shrink: 0;
+    display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap);
+    padding: 10px 17px; border-radius: 999px; font-size: 13.5px; font-weight: 500;
+    background: var(--glass); border: 1px solid var(--border); color: var(--fg-muted);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+  }
+  a.back:hover { border-color: var(--border-strong); color: var(--fg); }
+  #loader { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 14px; background: #030304; transition: opacity 0.5s; }
+  #loader.done { opacity: 0; pointer-events: none; }
+  #loader .bar { width: min(260px, 60vw); height: 3px; border-radius: 999px; background: rgba(255,255,255,0.1); overflow: hidden; }
+  #loader .bar i { display: block; height: 100%; width: 0%;
+    background: linear-gradient(90deg,#4deeea,#3d5afe 35%,#7b4de0 68%,#d94de8 100%); transition: width 0.2s; }
+  #loader span { color: #9ba0b6; font-size: 13px; }
+
+  /* panel de control agrupado: una sola pieza de vidrio, no botones sueltos */
+  .panel-control {
+    display: flex; align-items: center; gap: clamp(12px, 2vw, 22px);
+    padding: 14px clamp(14px, 2vw, 20px); border-radius: var(--radius);
+    background: var(--glass); border: 1px solid var(--border);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+    max-width: calc(100vw - 24px); flex-wrap: wrap; justify-content: center;
+  }
+  .grupo { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+  .grupo-label {
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--fg-dim); padding-left: 3px;
+  }
+  .separador { width: 1px; align-self: stretch; background: var(--border); margin: 4px 0; }
+  @media (max-width: 900px) {
+    /* en pantalla angosta la barra de arriba deja solo las imágenes, en una sola fila */
+    .barra-top .pd-mini { padding: 5px; }
+    .barra-top .pd-mini-txt { display: none; }
+    .barra-top .pd-minis { flex-wrap: nowrap; gap: 8px; }
+  }
+  @media (max-width: 560px) {
+    /* la flecha se explica sola: el texto solo estorba cuando no cabe */
+    .back-txt { display: none; }
+    a.back { padding: 10px 14px; }
+  }
+  @media (max-width: 720px) {
+    .separador { display: none; }
+    .panel-control { padding: 12px; gap: 10px; width: calc(100vw - 20px); }
+    .grupo { width: 100%; min-width: 0; }
+    /* una sola fila que se desliza con el dedo: el panel no crece a media pantalla */
+    .panel-control .pd-minis { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+    .panel-control .pd-minis::-webkit-scrollbar { display: none; }
+    .panel-control .pd-mini { flex-shrink: 0; }
+    .title p { display: none; }
+  }
+</style>
+<script defer src="assets/medicion.js"></script>
+</head>
+<body>
+<div class="brand-bar"></div>
+<div class="barra-top">
+  <a class="back" href="index.html"><span aria-hidden="true">←</span><span class="back-txt">Volver</span></a>
+  <div class="pd-minis pd-minis--compacta">
+    <a class="pd-mini" href="cubo.html">
+      <span class="pd-mini-img"><img src="assets/pano-acuario.jpg?v=4" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Cubo 360</b></span>
+    </a>
+    <a class="pd-mini" href="ar.html">
+      <span class="pd-mini-img"><img src="assets/estadio-bg.jpg?v=3" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Metropolitano</b></span>
+    </a>
+    <a class="pd-mini" href="ar-carnaval.html">
+      <span class="pd-mini-img"><img src="assets/carnaval-bg.jpg?v=3" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Carnaval</b></span>
+    </a>
+    <a class="pd-mini" href="ar-ventana.html">
+      <span class="pd-mini-img"><img src="assets/ventana-bg.jpg?v=3" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Ventana</b></span>
+    </a>
+    <div class="separador"></div>
+    <div class="grupo">
+      <span class="grupo-label">Tu evento</span>
+      <div class="acciones"><a class="pd-btn pd-btn--primary" style="text-decoration:none" href="https://wa.me/573207333874?text=Hola%21%20Prob%C3%A9%20el%20mapping%20en%20persistenciadigital.com%20y%20quiero%20un%20show%20para%20mi%20evento." target="_blank" rel="noopener">Quiero este mapping</a></div>
+    </div>
+  </div>
+</div>
+<div class="title">
+  <h1>Mapping sobre fachada real</h1>
+  <p>Arrastra para orbitar · show de mapping en loop: escaneo, columnas, revelado, geometría y color</p>
+</div>
+<div id="scene"></div>
+<div id="loader"><div class="bar"><i id="loadbar"></i></div><span id="loadmsg">Cargando la fachada…</span></div>
+<div class="hud">
+  <div class="panel-control">
+    <div class="grupo">
+      <span class="grupo-label">Superficie</span>
+      <div class="pd-minis pd-minis--compacta" id="buildings"></div>
+    </div>
+    <div class="separador"></div>
+    <div class="grupo">
+      <span class="grupo-label">Contenido proyectado</span>
+      <div class="pd-minis pd-minis--compacta" id="shows"></div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/" } }
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+  // contenido PROPIO de mapping: generativo en shader (como los shows reales),
+  // diseñado para cada fachada — nada de reusar las escenas 360 del cubo
+  // arte de mapping generado con nano banana (los modos generativos quedan de respaldo)
+  const ALL_SHOWS = {
+    vitral: { label: 'Vitrales', mode: 0, file: 'assets/mapping-vitrales.jpg' },
+    agua: { label: 'Agua', mode: 1, file: 'assets/mapping-agua.jpg' },
+    dorado: { label: 'Dorado', mode: 2, file: 'assets/mapping-dorado.jpg' },
+    flores: { label: 'Flores', mode: 3, file: 'assets/mapping-flores.jpg' },
+    fiesta: { label: 'Fiesta', mode: 4, file: 'assets/mapping-fiesta.jpg' },
+    atardecer: { label: 'Atardecer', mode: 5, file: 'assets/mapping-atardecer.jpg' },
+    circuito: { label: 'Circuito', mode: 6, file: 'assets/mapping-circuito.jpg' },
+    velocidad: { label: 'Velocidad', mode: 7, file: 'assets/mapping-velocidad.jpg' },
+    plasma: { label: 'Plasma', mode: 8, file: 'assets/mapping-plasma.jpg' },
+  };
+  // cada superficie con su encuadre, sus CONTENIDOS acordes y sus elementos 3D
+  const BUILDINGS = [
+    { label: 'Basílica', mini: 'basilica.jpg', file: 'assets/models/basilica.glb', height: 14, dist: 26, lookY: 6, span: [22, 14.7], shows: ['vitral', 'agua', 'dorado'], fx: 'dust' },
+    { label: 'Casa colonial', mini: 'casa.jpg', file: 'assets/models/casa.glb', height: 11, dist: 22, lookY: 4.5, span: [18, 11.6], shows: ['flores', 'fiesta', 'atardecer'], fx: 'petals' },
+    { label: 'Carro', mini: 'carro.jpg', file: 'assets/models/carro.glb', height: 4.2, dist: 13.5, lookY: 1.6, span: [9, 4.4], shows: ['circuito', 'velocidad', 'plasma'], fx: 'trails' },
+  ];
+
+  const container = document.getElementById('scene');
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.enabled = true;
+  container.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x030304, 30, 90);
+  const camera = new THREE.PerspectiveCamera(48, innerWidth / innerHeight, 0.1, 200);
+
+  // ---- fachada: edificio compuesto por volúmenes (estilo teatro/centro cultural) ----
+  const building = new THREE.Group();
+  const texLoader = new THREE.TextureLoader();
+
+  // material de mapping: textura proyectada en planar frontal + barrido de luz
+  const mapUniforms = {
+    tex: { value: null },
+    time: { value: 0 },
+    fade: { value: 0 },
+    sweep: { value: 0 },
+    span: { value: new THREE.Vector2(22, 14) },
+    spanZ: { value: 8 }, // profundidad real del modelo (para proyectores laterales y cenital)
+    cmode: { value: 0 },
+    texOn: { value: 0 }, // 1 = contenido de imagen (nano banana), 0 = generativo
+  };
+  const mappingMat = new THREE.ShaderMaterial({
+    uniforms: mapUniforms,
+    vertexShader: `
+      varying vec3 vWorld;
+      varying vec3 vNormal;
+      void main() {
+        vWorld = (modelMatrix * vec4(position, 1.0)).xyz;
+        vNormal = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * viewMatrix * vec4(vWorld, 1.0);
+      }`,
+    fragmentShader: `
+      uniform sampler2D tex;
+      uniform float time;
+      uniform float fade;
+      uniform float sweep;
+      uniform vec2 span;
+      uniform float cmode;
+      uniform float texOn;
+      uniform float spanZ;
+      varying vec3 vWorld;
+      varying vec3 vNormal;
+
+      float hash21(vec2 p) {
+        p = fract(p * vec2(123.34, 456.21));
+        p += dot(p, p + 45.32);
+        return fract(p.x * p.y);
+      }
+
+      // contenido generativo propio de mapping, por superficie
+      vec3 genContent(vec2 uv) {
+        int m = int(cmode + 0.5);
+        if (m == 0) {
+          // VITRALES: celdas de catedral con plomo oscuro y brillo pulsante
+          vec2 g = uv * vec2(8.0, 5.0);
+          vec2 id = floor(g), f = fract(g);
+          float h = hash21(id);
+          vec3 c = 0.5 + 0.5 * cos(6.283 * (h + vec3(0.0, 0.33, 0.67)));
+          float border = smoothstep(0.0, 0.08, f.x) * smoothstep(1.0, 0.92, f.x)
+                       * smoothstep(0.0, 0.08, f.y) * smoothstep(1.0, 0.92, f.y);
+          float glow = 0.55 + 0.45 * sin(time * 1.4 + h * 6.28);
+          return c * border * glow + vec3(0.02);
+        } else if (m == 1) {
+          // AGUA: cáusticas líquidas
+          vec2 p = uv * 6.0;
+          for (int i = 0; i < 3; i++) {
+            float fi = float(i);
+            p += vec2(sin(p.y * 1.7 + time * 0.8 + fi), cos(p.x * 1.6 - time * 0.7 - fi)) * 0.35;
+          }
+          float c = pow(abs(sin(p.x) * sin(p.y)), 3.0);
+          return mix(vec3(0.0, 0.12, 0.26), vec3(0.4, 0.95, 1.0), c);
+        } else if (m == 2) {
+          // DORADO: ondas de oro con destellos
+          float w = sin(uv.y * 14.0 - time * 2.0 + sin(uv.x * 6.0) * 0.8) * 0.5 + 0.5;
+          float shim = step(0.985, hash21(floor(uv * vec2(90.0, 60.0)) + floor(time * 7.0)));
+          return mix(vec3(0.3, 0.17, 0.03), vec3(1.0, 0.8, 0.32), w * 0.65) + vec3(1.0, 0.9, 0.6) * shim;
+        } else if (m == 3) {
+          // FLORES: patrón floral vivo girando suave
+          vec2 g = uv * vec2(6.0, 4.0);
+          vec2 id = floor(g), f = fract(g) - 0.5;
+          float h = hash21(id);
+          float r = length(f) * 2.2;
+          float a = atan(f.y, f.x);
+          float petals = cos(a * 6.0 + h * 6.28 + time * 0.5) * 0.5 + 0.5;
+          float flower = smoothstep(0.95, 0.25, r / (0.4 + petals * 0.45));
+          vec3 fc = mix(vec3(1.0, 0.42, 0.72), vec3(1.0, 0.78, 0.35), h);
+          float centerDot = smoothstep(0.25, 0.0, r);
+          return fc * flower + vec3(1.0, 0.9, 0.5) * centerDot + vec3(0.07, 0.02, 0.06);
+        } else if (m == 4) {
+          // FIESTA: papel picado de colores parpadeando
+          vec2 g = uv * vec2(14.0, 9.0);
+          float h = hash21(floor(g));
+          float tw = 0.35 + 0.65 * step(0.45, fract(h * 7.0 + time * (0.4 + h * 0.8)));
+          vec3 c = 0.5 + 0.5 * cos(6.283 * (h + vec3(0.0, 0.33, 0.67)));
+          vec2 f = fract(g);
+          float gap = smoothstep(0.0, 0.05, f.x) * smoothstep(1.0, 0.95, f.x)
+                    * smoothstep(0.0, 0.05, f.y) * smoothstep(1.0, 0.95, f.y);
+          return c * tw * gap;
+        } else if (m == 5) {
+          // ATARDECER: degradado cálido con nubes lentas
+          vec3 sky = mix(vec3(1.0, 0.45, 0.15), vec3(0.42, 0.13, 0.42), uv.y);
+          float clouds = sin(uv.x * 7.0 + time * 0.25) * sin(uv.y * 4.0 - time * 0.18) * 0.5 + 0.5;
+          return sky + vec3(1.0, 0.65, 0.35) * clouds * 0.16;
+        } else if (m == 6) {
+          // CIRCUITO: trazas tron con pulsos de luz viajando
+          vec2 g = uv * vec2(16.0, 9.0);
+          vec2 id = floor(g), f = fract(g);
+          float hx = step(hash21(id), 0.55);
+          float hy = step(0.55, hash21(id + 7.31));
+          float lx = smoothstep(0.07, 0.0, abs(f.y - 0.5)) * hx;
+          float ly = smoothstep(0.07, 0.0, abs(f.x - 0.5)) * hy;
+          float pulse = smoothstep(0.06, 0.0, abs(fract(uv.x * 2.2 - time * 0.55) - 0.5)) * lx;
+          float pulse2 = smoothstep(0.06, 0.0, abs(fract(uv.y * 2.0 + time * 0.4) - 0.5)) * ly;
+          return vec3(0.0, 0.05, 0.07) + vec3(0.3, 0.93, 0.92) * (lx + ly) * 0.45 + vec3(1.0) * (pulse + pulse2);
+        } else if (m == 7) {
+          // VELOCIDAD: ráfagas horizontales rasgando la superficie
+          float row = floor(uv.y * 44.0);
+          float h = hash21(vec2(row, 7.0));
+          float sx = fract(uv.x * 1.4 - time * (0.5 + h * 1.3) - h * 13.0);
+          float streak = smoothstep(0.4, 0.0, sx) * step(0.5, h);
+          return mix(vec3(0.0, 0.02, 0.05), mix(vec3(0.3, 0.93, 0.92), vec3(1.0), h), streak);
+        }
+        // PLASMA: energía fluida en colores de marca
+        float v = sin(uv.x * 8.0 + time) + sin(uv.y * 6.0 - time * 1.3)
+                + sin((uv.x + uv.y) * 7.0 + time * 0.7) + sin(length(uv - 0.5) * 12.0 - time * 1.5);
+        v *= 0.25;
+        return 0.5 + 0.5 * cos(6.283 * (v + vec3(0.53, 0.62, 0.78)));
+      }
+
+      // show de video mapping en loop: las fases clásicas de un show real,
+      // proyectadas sobre la geometría 3D verdadera del modelo
+      void main() {
+        vec3 brandA = vec3(0.30, 0.93, 0.92); // cian
+        vec3 brandB = vec3(0.24, 0.35, 1.00); // azul
+        vec3 brandC = vec3(0.48, 0.30, 0.88); // púrpura
+        vec3 brandD = vec3(0.85, 0.30, 0.91); // magenta
+
+        float T = mod(time, 26.0);
+        // MULTI-PROYECTOR: proyección triplanar completa — frente/atrás por Z,
+        // laterales por X y CENITAL por Y (clave en superficies curvas como el carro)
+        vec3 n = normalize(vNormal);
+        float wob = sin(time * 0.08) * 0.015;
+        // el contenido cubre el modelo COMPLETO de piso a techo (sin offset ni wrap vertical)
+        vec2 uvFront = vec2(vWorld.x / span.x + 0.5 + wob, vWorld.y / span.y);
+        vec2 uvSide = vec2(vWorld.z / spanZ + 0.5 + wob, vWorld.y / span.y);
+        vec2 uvTop = vec2(vWorld.x / span.x + 0.5 + wob, vWorld.z / spanZ + 0.5);
+        // pesos triplanar afilados para reducir la zona de mezcla borrosa
+        vec3 w3 = pow(abs(n), vec3(3.0));
+        float wx = w3.x, wy = w3.y, wz = w3.z;
+        vec2 uv = (wz >= wx && wz >= wy) ? uvFront : (wx >= wy ? uvSide : uvTop);
+        // contenido mezclado por los tres proyectores (x envuelve, y se fija al borde)
+        #define WUV(u) vec2(fract((u).x), clamp((u).y, 0.002, 0.998))
+        vec3 cF = mix(genContent(WUV(uvFront)), texture2D(tex, WUV(uvFront)).rgb, texOn);
+        vec3 cS = mix(genContent(WUV(uvSide)), texture2D(tex, WUV(uvSide)).rgb, texOn);
+        vec3 cT = mix(genContent(WUV(uvTop)), texture2D(tex, WUV(uvTop)).rgb, texOn);
+        vec3 content = (cF * wz + cS * wx + cT * wy) / max(wx + wy + wz, 0.0001);
+        // iluminación de 5 proyectores virtuales (frente, atrás, laterales y cenital)
+        float facing = max(
+          max(dot(n, vec3(0.0, 0.15, 1.0)), dot(n, vec3(0.0, 0.15, -1.0)) * 0.9),
+          max(max(dot(n, vec3(1.0, 0.15, 0.0)), dot(n, vec3(-1.0, 0.15, 0.0))) * 0.95, n.y * 0.9)
+        );
+        facing = clamp(facing, 0.0, 1.0);
+        float amb = 0.06;
+        float lit = amb + facing * 0.94;
+        // parpadeo sutil de lámpara de proyector: vende el realismo
+        float lamp = 0.97 + 0.03 * sin(time * 37.0) * sin(time * 11.3);
+        vec3 col = vec3(0.0);
+
+        if (T < 4.0) {
+          // FASE 1 · escaneo estructural: la luz "dibuja" el edificio
+          float p = T / 4.0;
+          float scanY = smoothstep(0.09, 0.0, abs(vWorld.y - p * (span.y + 2.0)) - 0.05);
+          float gridX = smoothstep(0.035, 0.0, abs(fract(vWorld.x * 0.55) - 0.5) - 0.02);
+          float gridY = smoothstep(0.035, 0.0, abs(fract(vWorld.y * 0.55) - 0.5) - 0.02);
+          float wire = max(gridX, gridY) * step(vWorld.y, p * (span.y + 2.0));
+          col = brandA * scanY * 1.6 + mix(brandB, brandC, uv.y) * wire * 0.5 * facing;
+        } else if (T < 8.0) {
+          // FASE 2 · persecución de barras verticales (chase de columnas)
+          float p = (T - 4.0) / 4.0;
+          float bar = smoothstep(0.32, 0.0, abs(fract(uv.x * 3.0 - p * 3.0) - 0.5));
+          float bar2 = smoothstep(0.22, 0.0, abs(fract(uv.x * 3.0 + p * 2.0 + 0.35) - 0.5));
+          vec3 g1 = mix(brandA, brandD, fract(uv.x + p));
+          vec3 g2 = mix(brandC, brandB, uv.y);
+          col = (g1 * bar + g2 * bar2 * 0.7) * (0.35 + facing * 0.8);
+        } else if (T < 15.0) {
+          // FASE 3 · revelado del contenido: máscara circular que se expande
+          float p = clamp((T - 8.0) / 2.2, 0.0, 1.0);
+          float r = length(vec2(vWorld.x, (vWorld.y - span.y * 0.35) * 1.4));
+          float edge = p * (span.x * 0.75);
+          float mask = smoothstep(edge, edge - 1.2, r);
+          float ring = smoothstep(1.1, 0.0, abs(r - edge)) * (1.0 - step(0.999, p));
+          col = content * lit * mask + brandA * ring * 1.2;
+        } else if (T < 19.0) {
+          // FASE 4 · geometría viva: franjas diagonales viajando sobre el contenido
+          float d = sin((vWorld.x + vWorld.y) * 1.1 - time * 3.2) * 0.5 + 0.5;
+          float stripes = smoothstep(0.38, 0.62, d);
+          col = content * lit * (0.45 + 0.55 * stripes) + mix(brandB, brandD, d) * stripes * 0.22 * facing;
+        } else if (T < 23.0) {
+          // FASE 5 · olas de color de marca subiendo por la arquitectura
+          float w = sin(vWorld.y * 1.4 - time * 2.6) * 0.5 + 0.5;
+          vec3 wash = mix(brandA, brandD, fract(vWorld.y * 0.07 - time * 0.09));
+          col = content * lit + wash * w * 0.30 * facing;
+        } else {
+          // FASE 6 · remate: pulsos de estrobo y flash blanco que reinicia el loop
+          float p = T - 23.0;
+          float strobe = step(0.5, fract(time * 5.0));
+          float flash = smoothstep(2.55, 3.0, p);
+          col = content * lit * (0.55 + 0.45 * strobe) + vec3(1.0) * flash * 0.85;
+        }
+
+        // línea de barrido permanente: firma del show
+        float line = smoothstep(0.02, 0.0, abs(vWorld.y - (sweep * (span.y + 3.0) - 1.0)) - 0.06);
+        col += brandA * line * 0.55;
+
+        gl_FragColor = vec4(col * lamp * fade, 1.0);
+      }`,
+  });
+
+  // material de proyección ADITIVO: se suma encima del edificio real, como un proyector
+  const overlayMat = mappingMat.clone();
+  overlayMat.uniforms = mapUniforms; // compartir uniforms (tex/fade/sweep/time)
+  overlayMat.blending = THREE.AdditiveBlending;
+  overlayMat.transparent = true;
+  overlayMat.depthWrite = false;
+
+  // modelos reales (Meshy → Blender → GLB con Draco)
+  const draco = new DRACOLoader();
+  draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+  const gltfLoader = new GLTFLoader();
+  gltfLoader.setDRACOLoader(draco);
+  const loaderEl = document.getElementById('loader');
+  const loadbar = document.getElementById('loadbar');
+  const loadmsg = document.getElementById('loadmsg');
+  let targetDist = 26, targetLookY = 6, loadSeq = 0;
+  function loadBuilding(b) {
+    const seq = ++loadSeq;
+    loaderEl.classList.remove('done');
+    loadbar.style.width = '0%';
+    loadmsg.textContent = 'Cargando ' + b.label.toLowerCase() + '…';
+    gltfLoader.load(b.file, (gltf) => {
+      if (seq !== loadSeq) return; // llegó tarde: ya se pidió otro modelo
+      loadbar.style.width = '100%';
+      loaderEl.classList.add('done');
+      building.clear();
+      const model = gltf.scene;
+      // normalizar: altura objetivo, centrado, base en el suelo
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      model.scale.setScalar(b.height / size.y);
+      const box2 = new THREE.Box3().setFromObject(model);
+      const center = box2.getCenter(new THREE.Vector3());
+      model.position.x -= center.x;
+      model.position.z -= center.z;
+      model.position.y -= box2.min.y;
+      // base tenue (la superficie "apagada" de noche) + overlay de proyección
+      const meshes = [];
+      model.traverse((o) => { if (o.isMesh) meshes.push(o); });
+      meshes.forEach((o) => {
+        if (o.material && o.material.color) o.material.color.multiplyScalar(0.32);
+        const proj = o.clone();
+        proj.material = overlayMat;
+        proj.scale.multiplyScalar(1.003);
+        o.parent.add(proj);
+      });
+      building.add(model);
+      mapUniforms.span.value.set(b.span[0], b.span[1]);
+      const dims = box2.getSize(new THREE.Vector3());
+      mapUniforms.spanZ.value = Math.max(dims.z * 1.15, 2);
+      mapUniforms.fade.value = 0;
+      mapUniforms.sweep.value = 0;
+      b.dims = dims;
+      targetDist = distParaEncuadre(b);
+      targetLookY = dims.y * 0.5;
+      // la primera superficie entra ya encuadrada; los cambios posteriores sí se animan
+      if (!currentB) { dist = targetDist; lookY = targetLookY; }
+      currentB = b;
+      setFx(b);
+      buildShowButtons(b);
+    }, (xhr) => {
+      if (seq !== loadSeq) return;
+      if (xhr.total > 0) {
+        const pct = Math.round((xhr.loaded / xhr.total) * 100);
+        loadbar.style.width = pct + '%';
+        loadmsg.textContent = 'Cargando ' + b.label.toLowerCase() + '… ' + pct + '%';
+      } else {
+        loadbar.style.width = '60%';
+      }
+    }, () => {
+      if (seq === loadSeq) loadmsg.textContent = 'No se pudo cargar el modelo — revisa tu conexión';
+    });
+  }
+  scene.add(building);
+
+  // suelo reflectante oscuro
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(200, 200),
+    new THREE.MeshStandardMaterial({ color: 0x07070d, roughness: 0.35, metalness: 0.6 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  scene.add(ground);
+
+  // público en silueta (cajas bajas delante)
+  let s = 5;
+  const rand = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+  const crowdMat = new THREE.MeshBasicMaterial({ color: 0x0a0a12 });
+  for (let i = 0; i < 60; i++) {
+    const p = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.9 + rand() * 0.4, 2, 6), crowdMat);
+    p.position.set((rand() - 0.5) * 26, 0.8, 8 + rand() * 6);
+    scene.add(p);
+  }
+
+  // estrellas
+  const starGeo = new THREE.BufferGeometry();
+  const starPos = new Float32Array(600 * 3);
+  for (let i = 0; i < 600; i++) {
+    starPos[i * 3] = (rand() - 0.5) * 160;
+    starPos[i * 3 + 1] = rand() * 70 + 6;
+    starPos[i * 3 + 2] = -20 - rand() * 60;
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.14, transparent: true, opacity: 0.7 })));
+
+  scene.add(new THREE.AmbientLight(0x333347, 1.6));
+
+  // ---- elementos 3D del show, acordes a cada superficie ----
+  // basílica: polvo de luz ascendente · casa: pétalos/luciérnagas · carro: estelas + anillos de neón
+  const fxCanvas = document.createElement('canvas');
+  fxCanvas.width = fxCanvas.height = 64;
+  const fctx = fxCanvas.getContext('2d');
+  const fgrad = fctx.createRadialGradient(32, 32, 2, 32, 32, 30);
+  fgrad.addColorStop(0, 'rgba(255,255,255,1)');
+  fgrad.addColorStop(0.5, 'rgba(255,255,255,0.35)');
+  fgrad.addColorStop(1, 'rgba(255,255,255,0)');
+  fctx.fillStyle = fgrad;
+  fctx.beginPath(); fctx.arc(32, 32, 30, 0, Math.PI * 2); fctx.fill();
+  const fxTex = new THREE.CanvasTexture(fxCanvas);
+  const FXN = 70;
+  const fxSprites = [];
+  for (let i = 0; i < FXN; i++) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: fxTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    scene.add(sp);
+    fxSprites.push({ s: sp, x: 0, y: 0, z: 0, speed: 0.01, seed: rand() * 100 });
+  }
+  const rings = [];
+  for (let i = 0; i < 2; i++) {
+    const r = new THREE.Mesh(
+      new THREE.TorusGeometry(3, 0.045, 8, 48),
+      new THREE.MeshBasicMaterial({ color: 0x4deeea, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    r.rotation.y = Math.PI / 2;
+    r.visible = false;
+    scene.add(r);
+    rings.push(r);
+  }
+  let fxMode = 'dust', currentB = null;
+  function setFx(b) {
+    fxMode = b.fx;
+    const palettes = {
+      dust: [0x4deeea, 0xffffff, 0x9fd8ff],
+      petals: [0xffb6e1, 0xffd27f, 0xeb86f2],
+      trails: [0x4deeea, 0x8b9cff, 0xffffff],
+    };
+    const colors = palettes[fxMode];
+    fxSprites.forEach((f, i) => {
+      f.s.material.color.setHex(colors[i % colors.length]);
+      if (fxMode === 'trails') {
+        f.s.scale.set(1.6 + rand() * 1.8, 0.045 + rand() * 0.035, 1); // estela alargada
+        f.y = 0.3 + rand() * b.height * 0.95;
+        f.z = (rand() - 0.5) * 5;
+        f.speed = 0.18 + rand() * 0.3;
+      } else {
+        const k = fxMode === 'petals' ? 0.22 + rand() * 0.26 : 0.12 + rand() * 0.2;
+        f.s.scale.set(k, k, 1);
+        f.y = rand() * b.height * 1.1;
+        f.z = (rand() - 0.5) * 8 + 2;
+        f.speed = fxMode === 'petals' ? 0.008 + rand() * 0.014 : 0.012 + rand() * 0.02;
+      }
+      f.x = (rand() - 0.5) * b.span[0] * 1.1;
+      f.s.position.set(f.x, f.y, f.z);
+    });
+    const ringR = fxMode === 'trails' ? b.height * 0.75 : 3;
+    rings.forEach((r) => {
+      r.visible = fxMode === 'trails';
+      r.scale.setScalar(ringR / 3);
+      r.position.set(0, b.lookY, 0);
+    });
+  }
+
+  // ---- cámara orbital limitada ----
+  // el modelo ya no gira solo, así que tiene que caber entero desde el primer cuadro.
+  // se calcula sobre la caja real del modelo, no sobre una distancia fija:
+  // así el celular vertical se aleja lo justo y el escritorio no queda lejísimos.
+  function distParaEncuadre(b) {
+    if (!b || !b.dims) return 26;
+    const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov) * 0.5);
+    const aspecto = Math.max(innerWidth / innerHeight, 0.35);
+    const alto = b.dims.y * 1.28;                             // aire arriba y abajo
+    const ancho = Math.max(b.dims.x, b.dims.z) * 1.14;        // aire a los lados
+    return Math.max(alto * 0.5 / tan, ancho * 0.5 / (tan * aspecto));
+  }
+
+  let lon = 0, lat = 12, dist = 26, lookY = 6, isDown = false, sx = 0, sy = 0, slon = 0, slat = 0;
+  const onDown = (x, y) => { isDown = true; sx = x; sy = y; slon = lon; slat = lat; };
+  const onMove = (x, y) => {
+    if (!isDown) return;
+    lon = slon + (x - sx) * 0.16; // órbita completa: todas las caras tienen proyector
+    lat = Math.max(2, Math.min(38, slat + (y - sy) * 0.12));
+  };
+  container.addEventListener('mousedown', (e) => onDown(e.clientX, e.clientY));
+  addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
+  addEventListener('mouseup', () => (isDown = false));
+  container.addEventListener('touchstart', (e) => onDown(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  container.addEventListener('touchmove', (e) => onMove(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  container.addEventListener('touchend', () => (isDown = false));
+
+
+  // construye una miniatura del sistema de diseño (imagen + nombre)
+  function crearMini(img, texto, activa) {
+    const a = document.createElement('button');
+    a.className = 'pd-mini' + (activa ? ' pd-mini--activa' : '');
+    a.type = 'button';
+    a.innerHTML =
+      '<span class="pd-mini-img"><img src="' + img + '" alt="" /></span>' +
+      '<span class="pd-mini-txt"><b>' + texto + '</b></span>';
+    return a;
+  }
+  // en celular las filas se deslizan: la opción elegida siempre queda a la vista
+  function acercarMini(el) {
+    if (el) el.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+  }
+
+  // ---- shows: imagen dedicada (nano banana) si el show trae file, si no generativo ----
+  let currentTex = null, texSeq = 0;
+  function loadShow(show, btn) {
+    document.querySelectorAll('#shows .pd-mini').forEach((b) => b.classList.remove('pd-mini--activa'));
+    if (btn) { btn.classList.add('pd-mini--activa'); acercarMini(btn); }
+    mapUniforms.fade.value = 0;
+    mapUniforms.sweep.value = 0;
+    const seq = ++texSeq;
+    if (show.file) {
+      texLoader.load(show.file, (t) => {
+        if (seq !== texSeq) { t.dispose(); return; }
+        t.colorSpace = THREE.SRGBColorSpace;
+        t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        const old = currentTex;
+        currentTex = t;
+        mapUniforms.tex.value = t;
+        mapUniforms.texOn.value = 1;
+        mapUniforms.fade.value = 0;
+        if (old && old !== t) old.dispose();
+      });
+    } else {
+      mapUniforms.texOn.value = 0;
+      mapUniforms.cmode.value = show.mode;
+    }
+  }
+  const showsEl = document.getElementById('shows');
+  // los contenidos disponibles dependen de la superficie elegida
+  function buildShowButtons(bld) {
+    showsEl.innerHTML = '';
+    bld.shows.forEach((id, i) => {
+      const show = ALL_SHOWS[id];
+      // la miniatura es el propio arte que se va a proyectar
+      const b = crearMini(show.file || 'assets/minis/' + bld.mini, show.label, i === 0);
+      b.addEventListener('click', () => loadShow(show, b));
+      showsEl.appendChild(b);
+    });
+    loadShow(ALL_SHOWS[bld.shows[0]], showsEl.children[0]);
+  }
+
+  const buildingsEl = document.getElementById('buildings');
+  BUILDINGS.forEach((bld, i) => {
+    const b = crearMini('assets/minis/' + bld.mini, bld.label, i === 0);
+    b.addEventListener('click', () => {
+      buildingsEl.querySelectorAll('.pd-mini').forEach((x) => x.classList.remove('pd-mini--activa'));
+      b.classList.add('pd-mini--activa');
+      acercarMini(b);
+      loadBuilding(bld);
+    });
+    buildingsEl.appendChild(b);
+  });
+  loadBuilding(BUILDINGS[0]);
+
+  function tick(t) {
+    requestAnimationFrame(tick);
+    mapUniforms.time.value = t / 1000;
+    mapUniforms.fade.value = Math.min(1, mapUniforms.fade.value + 0.025);
+    mapUniforms.sweep.value = (t / 6000) % 1;
+    // elementos 3D acordes a la superficie
+    if (currentB) {
+      const halfW = currentB.span[0] * 0.6;
+      for (const f of fxSprites) {
+        if (fxMode === 'trails') {
+          f.x += f.speed;
+          if (f.x > halfW) f.x = -halfW;
+          f.s.position.set(f.x, f.y, f.z);
+        } else {
+          f.y += f.speed;
+          if (f.y > currentB.height * 1.25) { f.y = 0; f.x = (rand() - 0.5) * currentB.span[0] * 1.1; }
+          f.s.position.set(f.x + Math.sin(t / 1000 + f.seed) * 0.5, f.y, f.z);
+        }
+        f.s.material.opacity = mapUniforms.fade.value * (fxMode === 'dust' ? 0.4 : 0.75);
+      }
+      if (fxMode === 'trails') {
+        rings.forEach((r, i) => {
+          const p = (t / 1600 + i * 0.5) % 1;
+          r.position.x = (p - 0.5) * currentB.span[0] * 0.95;
+          r.material.opacity = 0.75 * Math.sin(p * Math.PI) * mapUniforms.fade.value;
+        });
+      }
+    }
+    // sin rotación automática: el modelo se queda quieto y lo mueve el usuario
+    dist += (targetDist - dist) * 0.04;
+    lookY += (targetLookY - lookY) * 0.04;
+    const phi = THREE.MathUtils.degToRad(lat);
+    const theta = THREE.MathUtils.degToRad(lon);
+    // órbita esférica real alrededor del centro del modelo: el radio es el que encuadra
+    const rad = Math.cos(phi) * dist;
+    camera.position.set(Math.sin(theta) * rad, lookY + Math.sin(phi) * dist, Math.cos(theta) * rad);
+    camera.lookAt(0, lookY, 0);
+    renderer.render(scene, camera);
+  }
+  requestAnimationFrame(tick);
+
+  addEventListener('resize', () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+    targetDist = distParaEncuadre(currentB);
+  });
+</script>
+</body>
+</html>

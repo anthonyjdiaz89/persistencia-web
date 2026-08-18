@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>El Portal — fotocabina mágica | Persistencia Digital</title>
+<meta name="description" content="Activación de marca: la cámara te recorta en vivo y te lleva dentro de mundos imposibles — acuario, faroles, galaxia. Te llevas la foto con la marca." />
+<!-- seo-preciso -->
+<link rel="canonical" href="https://persistenciadigital.com/portal.html" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Persistencia Digital" />
+<meta property="og:title" content="El Portal — fotocabina mágica | Persistencia Digital" />
+<meta property="og:description" content="Activación de marca: la cámara te recorta en vivo y te lleva dentro de mundos imposibles — acuario, faroles, galaxia. Te llevas la foto con la marca." />
+<meta property="og:url" content="https://persistenciadigital.com/portal.html" />
+<meta property="og:image" content="https://persistenciadigital.com/assets/og/portal.jpg" />
+<meta property="og:image:secure_url" content="https://persistenciadigital.com/assets/og/portal.jpg" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="1080" />
+<meta property="og:image:height" content="1080" />
+<meta property="og:locale" content="es_CO" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="El Portal — fotocabina mágica | Persistencia Digital" />
+<meta name="twitter:description" content="Activación de marca: la cámara te recorta en vivo y te lleva dentro de mundos imposibles — acuario, faroles, galaxia. Te llevas la foto con la marca." />
+<meta name="twitter:image" content="https://persistenciadigital.com/assets/og/portal.jpg" />
+<!-- /seo-preciso -->
+<link rel="icon" type="image/webp" href="assets/isotipo.webp" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #06060c; --surface: rgba(255,255,255,0.05); --border: rgba(255,255,255,0.14);
+    --fg: #f4f6ff; --fg-dim: rgba(244,246,255,0.66);
+    --cyan: #4deeea; --grad: linear-gradient(90deg, #4deeea, #3d5afe 45%, #d94de8);
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  body { font-family: "Inter", "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100svh; overflow-x: clip; }
+  .banda { position: fixed; inset: 0 0 auto 0; height: 3px; background: var(--grad); z-index: 90; }
+  /* la barra SIEMPRE por encima de cualquier panel (lección del Gritómetro) */
+  .barra { position: fixed; top: 14px; left: 14px; z-index: 80; }
+  .volver {
+    display: inline-flex; align-items: center; gap: 7px; padding: 10px 16px; border-radius: 999px;
+    font-size: 13.5px; font-weight: 650; color: var(--fg); text-decoration: none;
+    border: 1px solid var(--border); background: rgba(6,6,12,0.6); backdrop-filter: blur(8px);
+  }
+  .pd-btn {
+    padding: 12px 20px; border-radius: 999px; font-size: 14px; font-weight: 650; cursor: pointer;
+    color: var(--fg); border: 1px solid var(--border); background: var(--surface);
+    transition: transform 0.2s var(--ease), background 0.2s; font-family: inherit;
+  }
+  .pd-btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.1); }
+  .pd-btn--primary { background: var(--grad); border: none; color: #06060c; font-weight: 800; }
+  .pd-btn--activa { border-color: var(--cyan); color: var(--cyan); }
+
+  #portada {
+    position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 14px; text-align: center;
+    background: radial-gradient(90% 70% at 50% 20%, rgba(217,77,232,0.08), transparent 60%), var(--bg);
+    padding: 20px;
+  }
+  #portada.oculta { display: none; }
+  #portada .kicker { font-size: 12px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  #portada h1 { font-size: clamp(38px, 8vw, 80px); font-weight: 850; letter-spacing: -0.02em; line-height: 1; }
+  #portada p { color: var(--fg-dim); max-width: 470px; line-height: 1.6; font-size: 15.5px; }
+  #estado-cam { font-size: 13px; color: var(--fg-dim); min-height: 18px; }
+
+  main { display: none; min-height: 100svh; padding: 66px 14px 26px; flex-direction: column; align-items: center; gap: 14px; }
+  main.activo { display: flex; }
+  #escena { position: relative; width: min(440px, 94vw); border-radius: 22px; overflow: clip; border: 1px solid var(--border); box-shadow: 0 30px 80px rgba(0,0,0,0.55); }
+  #lienzo { width: 100%; display: block; aspect-ratio: 3/4; background: #000; }
+  #cargando {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(4,4,10,0.75); font-size: 14px; color: var(--fg-dim); text-align: center; padding: 20px;
+  }
+  .mundos { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .acciones { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+  #listo {
+    position: fixed; inset: 0; z-index: 70; display: none; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px; text-align: center;
+    background: rgba(4,4,10,0.92); backdrop-filter: blur(10px); padding: 18px;
+  }
+  #listo.abierto { display: flex; }
+  #listo h2 { font-size: clamp(24px, 5vw, 40px); font-weight: 850; letter-spacing: -0.01em; }
+  #foto-final { width: min(330px, 78vw); border-radius: 18px; border: 1px solid var(--border); }
+  .cta-final {
+    margin-top: 4px; padding-top: 14px; border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(360px, 88vw);
+  }
+  .cta-final h3 { font-size: 16px; font-weight: 750; }
+  .cta-final p { font-size: 13px; color: var(--fg-dim); }
+  .cta-final a { text-decoration: none; width: 100%; text-align: center; }
+</style>
+<script defer src="assets/medicion.js"></script>
+</head>
+<body>
+<div class="banda"></div>
+<div class="barra">
+  <a class="volver" href="index.html#s-activaciones"><span aria-hidden="true">←</span><span>Volver</span></a>
+</div>
+
+<div id="portada">
+  <div class="kicker">Activación de marca · Fotocabina mágica</div>
+  <h1>El Portal</h1>
+  <p>Párate frente a la cámara y cruza el portal: el sistema te recorta en vivo y te lleva al fondo del acuario, a la noche de faroles o a la galaxia. La foto es tuya, con marco y todo.</p>
+  <button class="pd-btn pd-btn--primary" id="btn-empezar" type="button">Abrir el portal</button>
+  <div id="estado-cam"></div>
+</div>
+
+<main id="app">
+  <div id="escena">
+    <canvas id="lienzo" width="900" height="1200"></canvas>
+    <div id="cargando">Cargando la magia del recorte…</div>
+  </div>
+  <div class="mundos" id="mundos">
+    <button class="pd-btn pd-btn--activa" data-mundo="faroles" type="button">Noche de faroles</button>
+    <button class="pd-btn" data-mundo="acuario" type="button">Acuario</button>
+    <button class="pd-btn" data-mundo="galaxia" type="button">Galaxia</button>
+  </div>
+  <div class="acciones">
+    <button class="pd-btn pd-btn--primary" id="btn-foto" type="button">Tomar la foto</button>
+  </div>
+</main>
+
+<div id="listo">
+  <h2>Cruzaste el portal</h2>
+  <img id="foto-final" alt="Tu foto dentro del mundo elegido" />
+  <div class="acciones">
+    <button class="pd-btn pd-btn--primary" id="btn-descargar" type="button">Llevarme mi foto</button>
+    <button class="pd-btn" id="btn-repetir" type="button">Otra foto</button>
+  </div>
+  <div class="cta-final">
+    <h3>¿La quieres en tu evento?</h3>
+    <p>Con tus fondos, tu marco y tu marca — la gente se lleva la foto y la publica sola.</p>
+    <a class="pd-btn pd-btn--primary" href="https://wa.me/573207333874?text=Hola%21%20Prob%C3%A9%20El%20Portal%20en%20persistenciadigital.com%20y%20quiero%20esta%20fotocabina%20para%20mi%20evento." target="_blank" rel="noopener">Quiero esta activación</a>
+  </div>
+</div>
+
+<script type="module">
+  // El Portal: segmentación de persona EN VIVO en el navegador (MediaPipe
+  // ImageSegmenter vendorizado) — el visitante aparece dentro de los mundos
+  // del catálogo y se lleva la foto con el marco de la marca.
+  const lienzo = document.getElementById('lienzo');
+  const ctx = lienzo.getContext('2d');
+  const CW = 900, CH = 1200;
+
+  const MUNDOS = { faroles: null, acuario: null, galaxia: null };
+  let mundoActivo = 'faroles';
+  for (const m of Object.keys(MUNDOS)) {
+    const im = new Image();
+    im.src = `portal/fondo-${m}.jpg`;
+    MUNDOS[m] = im;
+  }
+
+  let video = null, segmentador = null, mascaraCanvas = null, mctx = null, personaCanvas = null, pctx = null;
+  const est = { on: false, listo: false, congelada: false };
+
+  document.getElementById('btn-empezar').addEventListener('click', async () => {
+    const estado = document.getElementById('estado-cam');
+    estado.textContent = 'Pidiendo permiso de cámara…';
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 960 }, height: { ideal: 1280 } }, audio: false });
+      video = document.createElement('video');
+      video.srcObject = stream;
+      video.muted = true; video.playsInline = true;
+      await video.play();
+      est.on = true;
+      document.getElementById('portada').classList.add('oculta');
+      document.getElementById('app').classList.add('activo');
+      cargarSegmentador();
+      requestAnimationFrame(tick);
+    } catch (e) {
+      estado.textContent = e.name === 'NotAllowedError'
+        ? 'Permiso bloqueado — habilítalo en el candado del navegador y vuelve a intentar'
+        : 'La cámara no respondió (' + e.name + ')';
+    }
+  });
+
+  async function cargarSegmentador() {
+    try {
+      const mp = await import('./assets/mediapipe/vision_bundle.mjs');
+      const files = await mp.FilesetResolver.forVisionTasks('assets/mediapipe/wasm');
+      segmentador = await mp.ImageSegmenter.createFromOptions(files, {
+        baseOptions: { modelAssetPath: 'assets/mediapipe/selfie_segmenter.tflite', delegate: 'GPU' },
+        runningMode: 'VIDEO', outputConfidenceMasks: true,
+      });
+      mascaraCanvas = document.createElement('canvas');
+      personaCanvas = document.createElement('canvas');
+      mctx = mascaraCanvas.getContext('2d');
+      pctx = personaCanvas.getContext('2d');
+      est.listo = true;
+      document.getElementById('cargando').style.display = 'none';
+    } catch (e) {
+      document.getElementById('cargando').textContent = 'No pude cargar el recorte (' + (e.message || e) + ')';
+    }
+  }
+
+  let ultimaMascara = 0;
+  function tick(t) {
+    requestAnimationFrame(tick);
+    if (!est.on || est.congelada) return;
+    const fondo = MUNDOS[mundoActivo];
+    if (fondo && fondo.complete) ctx.drawImage(fondo, 0, 0, CW, CH);
+
+    if (est.listo && video.readyState >= 2 && t - ultimaMascara > 66) {
+      ultimaMascara = t;
+      const res = segmentador.segmentForVideo(video, t);
+      const masc = res.confidenceMasks && res.confidenceMasks[0];
+      if (masc) {
+        const mw = masc.width, mh = masc.height;
+        if (mascaraCanvas.width !== mw) { mascaraCanvas.width = mw; mascaraCanvas.height = mh; }
+        const datos = masc.getAsFloat32Array();
+        const img = mctx.createImageData(mw, mh);
+        for (let i = 0; i < mw * mh; i++) {
+          const a = Math.max(0, Math.min(1, (datos[i] - 0.25) * 2.2)); // umbral suave
+          img.data[i * 4 + 3] = a * 255;
+        }
+        mctx.putImageData(img, 0, 0);
+        masc.close();
+        // persona = video enmascarado (en espejo)
+        if (personaCanvas.width !== video.videoWidth) { personaCanvas.width = video.videoWidth; personaCanvas.height = video.videoHeight; }
+        pctx.save();
+        pctx.clearRect(0, 0, personaCanvas.width, personaCanvas.height);
+        pctx.scale(-1, 1);
+        pctx.drawImage(video, -personaCanvas.width, 0);
+        pctx.restore();
+        pctx.globalCompositeOperation = 'destination-in';
+        pctx.save();
+        pctx.scale(-1, 1);
+        pctx.drawImage(mascaraCanvas, -personaCanvas.width, 0, personaCanvas.width, personaCanvas.height);
+        pctx.restore();
+        pctx.globalCompositeOperation = 'source-over';
+      }
+    }
+    if (personaCanvas && personaCanvas.width) {
+      // encuadre cover de la persona sobre el lienzo 3:4
+      const vr = personaCanvas.width / personaCanvas.height, cr = CW / CH;
+      let dw, dh;
+      if (vr > cr) { dh = CH; dw = CH * vr; } else { dw = CW; dh = CW / vr; }
+      ctx.drawImage(personaCanvas, (CW - dw) / 2, CH - dh, dw, dh);
+    }
+    marco();
+  }
+
+  // marco de marca: borde degradado + isotipo + dominio
+  const iso = new Image();
+  iso.src = 'assets/isotipo.webp';
+  function marco() {
+    const g = ctx.createLinearGradient(0, 0, CW, 0);
+    g.addColorStop(0, '#4deeea'); g.addColorStop(0.5, '#3d5afe'); g.addColorStop(1, '#d94de8');
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 14;
+    ctx.strokeRect(7, 7, CW - 14, CH - 14);
+    ctx.fillStyle = 'rgba(4,4,10,0.55)';
+    ctx.beginPath();
+    ctx.roundRect(CW / 2 - 190, CH - 74, 380, 48, 24);
+    ctx.fill();
+    if (iso.complete) ctx.drawImage(iso, CW / 2 - 172, CH - 66, 32, 32);
+    ctx.fillStyle = '#f4f6ff';
+    ctx.font = '600 22px Inter, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('persistenciadigital.com', CW / 2 - 128, CH - 42);
+  }
+
+  // mundos
+  document.getElementById('mundos').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-mundo]');
+    if (!b) return;
+    mundoActivo = b.dataset.mundo;
+    document.querySelectorAll('#mundos .pd-btn').forEach((x) => x.classList.remove('pd-btn--activa'));
+    b.classList.add('pd-btn--activa');
+  });
+
+  // foto
+  document.getElementById('btn-foto').addEventListener('click', () => {
+    est.congelada = true;
+    document.getElementById('foto-final').src = lienzo.toDataURL('image/jpeg', 0.92);
+    document.getElementById('listo').classList.add('abierto');
+  });
+  document.getElementById('btn-descargar').addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.href = document.getElementById('foto-final').src;
+    a.download = 'mi-portal-persistencia.jpg';
+    a.click();
+  });
+  document.getElementById('btn-repetir').addEventListener('click', () => {
+    est.congelada = false;
+    document.getElementById('listo').classList.remove('abierto');
+  });
+
+  // gancho e2e
+  window.__portal = { est, get mundo() { return mundoActivo; }, get video() { return video; } };
+</script>
+</body>
+</html>

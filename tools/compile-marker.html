@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+</head>
+<body>
+<script type="module">
+  // compila la imagen indicada por ?img= al formato .mind (corre en Chrome headless)
+  import { Compiler } from 'https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js';
+  window.__ready = false;
+  const params = new URLSearchParams(location.search);
+  const src = params.get('img') || '/assets/marker.png';
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.src = src;
+  img.onload = () => { window.__ready = true; };
+  img.onerror = () => { console.log('ERROR cargando imagen', src); };
+
+  window.compileMarker = async () => {
+    const compiler = new Compiler();
+    await compiler.compileImageTargets([img], (p) => console.log('progreso', Math.round(p)));
+    const buf = await compiler.exportData();
+    const bytes = new Uint8Array(buf);
+    let bin = '';
+    const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+    }
+    return btoa(bin);
+  };
+</script>
+</body>
+</html>

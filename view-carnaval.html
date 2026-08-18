@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<!-- seo-preciso -->
+<link rel="canonical" href="https://persistenciadigital.com/view-carnaval.html" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Persistencia Digital" />
+<meta property="og:title" content="Persistencia AR — Carnaval de Barranquilla" />
+<meta property="og:description" content="Experiencias inmersivas de Persistencia Digital." />
+<meta property="og:url" content="https://persistenciadigital.com/view-carnaval.html" />
+<meta property="og:image" content="https://persistenciadigital.com/assets/og/view-carnaval.jpg" />
+<meta property="og:image:secure_url" content="https://persistenciadigital.com/assets/og/view-carnaval.jpg" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="1080" />
+<meta property="og:image:height" content="1080" />
+<meta property="og:locale" content="es_CO" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Persistencia AR — Carnaval de Barranquilla" />
+<meta name="twitter:description" content="Experiencias inmersivas de Persistencia Digital." />
+<meta name="twitter:image" content="https://persistenciadigital.com/assets/og/view-carnaval.jpg" />
+<!-- /seo-preciso -->
+<title>Persistencia AR — Carnaval de Barranquilla</title>
+<link rel="icon" type="image/webp" href="assets/isotipo.webp" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/pd-ui.css" />
+<script src="assets/aframe.min.js"></script>
+<script src="assets/mindar-image-aframe.prod.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  /* el fondo va SOLO en html: el video de MindAR usa z-index -2 y un fondo
+     en body lo taparía (orden de pintado CSS) */
+  html { height: 100%; background: #030304; }
+  body { position: fixed; inset: 0; overflow: hidden; background: transparent; font-family: 'Inter', system-ui, sans-serif; }
+  .overlay {
+    position: fixed; left: 0; right: 0; z-index: 20; pointer-events: none;
+    display: flex; justify-content: center; color: #f3f4f9;
+  }
+  .overlay.top { top: 0; padding: 14px; }
+  .overlay.bottom { bottom: 0; padding: 18px; }
+  .chip {
+    background: var(--glass); border: 1px solid var(--border);
+    border-radius: 999px; padding: 11px 20px; font-size: 14px; font-weight: 500;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    display: flex; align-items: center; gap: 9px; color: var(--fg);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--grad); flex-shrink: 0; }
+  .brand-bar { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 30; background: var(--grad); }
+  #status.found { color: var(--cyan); }
+  #inicio {
+    position: fixed; inset: 0; z-index: 40;
+    background: radial-gradient(60% 60% at 50% 38%, rgba(61,90,254,0.16), transparent 70%), rgba(6,6,9,0.93);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+    color: var(--fg); text-align: center; padding: 28px;
+  }
+  #inicio h1 { font-size: clamp(22px, 5.6vw, 30px); font-weight: 750; letter-spacing: -0.025em; max-width: 17ch; line-height: 1.15; }
+  #inicio p { color: var(--fg-muted); font-size: 15px; max-width: 34ch; line-height: 1.55; }
+  #inicio button {
+    min-height: 54px; padding: 15px 36px; border-radius: 999px; border: none; cursor: pointer;
+    font-size: 16.5px; font-weight: 700; color: #06060c; font-family: inherit;
+    background: var(--grad); transition: transform 0.2s var(--ease), filter 0.2s var(--ease);
+  }
+  #inicio button:hover { transform: translateY(-2px); filter: brightness(1.1); }
+  #inicio.oculto { display: none; }
+  /* navegación: volver y cambiar de experiencia sin salir del celular */
+  .nav-exp-movil {
+    position: fixed; left: 0; right: 0; bottom: 14px; z-index: 22;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    flex-wrap: wrap; padding: 0 12px;
+  }
+  .nav-exp-movil .volver {
+    display: inline-flex; align-items: center; gap: 7px; min-height: var(--tap);
+    padding: 10px 16px; border-radius: 14px; text-decoration: none;
+    background: var(--glass); border: 1px solid var(--border); color: var(--fg);
+    font-size: 13px; font-weight: 600;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  }
+  .nav-exp-movil .volver svg { width: 15px; height: 15px; }
+  @media (max-height: 620px) { .nav-exp-movil .pd-mini-txt { display: none; } }
+</style>
+<script defer src="assets/medicion.js"></script>
+</head>
+<body>
+<div class="brand-bar"></div>
+
+<div id="inicio">
+  <h1>El Carnaval cobra vida</h1>
+  <p>Apunta tu cámara a la foto del Carnaval: la Marimonda sale bailando hacia ti. Tócalo y mira lo que pasa.</p>
+  <button id="btn-inicio" type="button">Iniciar experiencia</button>
+</div>
+
+<div class="overlay top"><div class="chip"><span class="dot"></span><span id="status">Apunta la cámara a la foto del Carnaval</span></div></div>
+<div class="nav-exp-movil">
+  <a class="volver" href="index.html" aria-label="Volver a todas las experiencias"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>Volver</a>
+  <div class="pd-minis pd-minis--compacta">
+    <a class="pd-mini" href="view.html"><span class="pd-mini-img"><img src="assets/estadio-bg.jpg?v=3" alt="" /></span><span class="pd-mini-txt"><b>El Metropolitano</b></span></a>
+    <a class="pd-mini" href="view-ventana.html?v=1"><span class="pd-mini-img"><img src="assets/ventana-bg.jpg?v=3" alt="" /></span><span class="pd-mini-txt"><b>Ventana al Mundo</b></span></a>
+  </div>
+</div>
+
+<a-scene
+  mindar-image="imageTargetSrc: ./assets/carnaval.mind?v=1; autoStart: false; filterMinCF: 0.0001; filterBeta: 0.001; uiScanning: no; uiLoading: no;"
+  gltf-model="dracoDecoderPath: ./assets/draco/"
+  color-space="sRGB"
+  renderer="colorManagement: true; maxCanvasWidth: 1280; maxCanvasHeight: 1280"
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false"
+>
+  <a-assets>
+    <img id="glowring" src="./assets/glow-ring.png" crossorigin="anonymous" />
+    <img id="grietas" src="./assets/fx-grietas.png?v=2" crossorigin="anonymous" />
+    <img id="niebla" src="./assets/fx-niebla.png?v=2" crossorigin="anonymous" />
+  </a-assets>
+
+  <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse" raycaster="objects: .tocable"></a-camera>
+
+  <!-- luces EN LA RAÍZ (no dentro del ancla, que MindAR esconde): los materiales
+       de los GLB de Meshy necesitan luz o se renderizan negros -->
+  <a-entity light="type: ambient; intensity: 0.72"></a-entity>
+  <a-entity light="type: directional; intensity: 0.45" position="1 2 3"></a-entity>
+  <a-entity light="type: directional; intensity: 0.25" position="-2 1 2"></a-entity>
+
+  <a-entity id="anchor" mindar-image-target="targetIndex: 0">
+    <!-- anillo de energía al detectar y al tocar el monumento -->
+    <a-plane id="ring" src="#glowring" transparent="true" width="1.4" height="1.4" position="0 0 0.02"
+      scale="0.1 0.1 0.1"
+      animation__ring="property: scale; from: 0.1 0.1 0.1; to: 1.8 1.8 1.8; dur: 900; easing: easeOutCubic; startEvents: targetFound, magia"
+      animation__ringfade="property: material.opacity; from: 0.9; to: 0; dur: 900; easing: easeOutCubic; startEvents: targetFound, magia"
+    ></a-plane>
+
+    <!-- la pantalla se rompe y sale niebla de energía -->
+    <a-plane src="#grietas" transparent="true" material="shader: flat; blending: additive"
+      width="0.85" height="0.85" position="0 0 0.01" scale="0.01 0.01 0.01"
+      animation__pop="property: scale; from: 0.01 0.01 0.01; to: 1 1 1; dur: 350; delay: 250; easing: easeOutCubic; startEvents: targetFound"
+    ></a-plane>
+    <a-plane src="#niebla" transparent="true" material="shader: flat; blending: additive; opacity: 0.8"
+      width="0.6" height="0.6" position="-0.14 0.08 0.08"
+      animation__resp="property: scale; from: 0.8 0.8 0.8; to: 1.25 1.25 1.25; dur: 2200; dir: alternate; loop: true; easing: easeInOutSine"
+    ></a-plane>
+    <a-plane src="#niebla" transparent="true" material="shader: flat; blending: additive; opacity: 0.55"
+      width="0.5" height="0.5" position="0.16 -0.06 0.12" rotation="0 0 140"
+      animation__resp="property: scale; from: 1.1 1.1 1.1; to: 0.75 0.75 0.75; dur: 2600; dir: alternate; loop: true; easing: easeInOutSine"
+    ></a-plane>
+
+    <!-- LA VENTANA AL MUNDO 3D: emerge de la pantalla hacia el espectador -->
+    <a-entity id="mari-wrap" position="0 -0.02 0.02" rotation="8 0 0" scale="0.001 0.001 0.001"
+      animation__pop="property: scale; from: 0.001 0.001 0.001; to: 1 1 1; dur: 1200; delay: 500; easing: easeOutBack; startEvents: targetFound"
+      animation__sube="property: object3D.position.z; from: 0.02; to: 0.3; dur: 1200; delay: 500; easing: easeOutCubic; startEvents: targetFound"
+      animation__flota="property: object3D.position.y; from: -0.02; to: 0.04; dur: 3000; delay: 1900; dir: alternate; loop: true; easing: easeInOutSine; startEvents: targetFound"
+      animation__spin="property: rotation; from: 8 0 0; to: 8 360 0; dur: 1400; easing: easeInOutCubic; startEvents: magia">
+      <!-- capas de baile: el modelo es una pose fija, así que el BAILE se arma
+           combinando balanceo + saltos + giro sobre entidades anidadas -->
+      <a-entity id="mari-giro" rotation="0 -28 0"
+        animation__cumbia="property: rotation; from: 0 -28 0; to: 0 28 0; dur: 1500; dir: alternate; loop: true; easing: easeInOutSine">
+        <a-entity id="mari-salto"
+          animation__salto="property: object3D.position.y; from: 0; to: 0.1; dur: 360; dir: alternate; loop: true; easing: easeOutQuad">
+          <a-entity id="mari-balanceo" rotation="0 0 -9"
+            animation__balanceo="property: rotation; from: 0 0 -9; to: 0 0 9; dur: 750; dir: alternate; loop: true; easing: easeInOutSine">
+            <a-entity id="marimonda3d" class="tocable" gltf-model="url(./assets/marimonda.glb?v=1)"></a-entity>
+          </a-entity>
+        </a-entity>
+      </a-entity>
+    </a-entity>
+
+    <!-- título anclado en el borde superior del marcador -->
+    <a-entity position="0 0.6 0.15" scale="0.01 0.01 0.01"
+      text="value: Carnaval de Barranquilla; align: center; color: #4deeea; width: 0.9; font: ./assets/fonts/Exo2Bold.fnt"
+      animation__pop="property: scale; from: 0.01 0.01 0.01; to: 0.42 0.42 0.42; dur: 800; delay: 1100; easing: easeOutBack; startEvents: targetFound"
+    ></a-entity>
+    <a-entity position="0 0.52 0.15" scale="0.4 0.4 0.4"
+      text="value: PERSISTENCIA DIGITAL; align: center; color: #f3f4f9; width: 0.7; font: ./assets/fonts/Exo2Bold.fnt; opacity: 0"
+      animation__in="property: text.opacity; from: 0; to: 1; dur: 800; delay: 1800; startEvents: targetFound"
+    ></a-entity>
+
+
+    <!-- confeti con la paleta del mosaico del monumento -->
+    <a-entity id="particles"></a-entity>
+  </a-entity>
+</a-scene>
+
+<script>
+  // diagnóstico visible en el celular
+  const dlog = (m) => console.log('[pd]', m);
+
+  // rastro silencioso: iOS mata la pestaña por memoria SIN disparar ningún evento JS,
+  // así que la única forma de saberlo es dejar migas entre recargas
+  const miga = (e) => { try { sessionStorage.setItem('pd_etapa', e + ' @' + Math.round(performance.now()) + 'ms'); } catch (_) {} };
+  (function () {
+    try {
+      const previa = sessionStorage.getItem('pd_etapa');
+      const n = (+sessionStorage.getItem('pd_recargas') || 0) + 1;
+      sessionStorage.setItem('pd_recargas', n);
+      if (n > 1 && previa) console.warn('[pd] reinicio #' + n + ' — se cayó en: ' + previa);
+    } catch (_) {}
+    miga('carga');
+  })();
+
+  window.addEventListener('error', (e) => dlog('ERR ' + String(e.message || e.type).slice(0, 70)));
+  dlog('pagina v4 cargada');
+
+  // iOS entrega cámara 480x640 por defecto y el tracker no reconoce nada:
+  // interceptar getUserMedia para exigir Full HD
+  const gumOriginal = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+  navigator.mediaDevices.getUserMedia = (c) => {
+    if (c && c.video) {
+      c.video = Object.assign({}, c.video === true ? {} : c.video, {
+        width: { ideal: 1280 }, height: { ideal: 960 }, frameRate: { ideal: 30, max: 30 },
+      });
+    }
+    return gumOriginal(c);
+  };
+
+  // EL BOTÓN PRIMERO: aunque algo más falle, iniciar siempre responde
+  const status = document.getElementById('status');
+  const sceneEl = document.querySelector('a-scene');
+  sceneEl.addEventListener('arReady', () => dlog('AR listo (camara ok)'));
+  sceneEl.addEventListener('arError', () => dlog('AR ERROR: camara o tracker fallo'));
+  sceneEl.addEventListener('loaded', () => {
+    const canvas = sceneEl.canvas;
+    if (canvas) canvas.addEventListener('webglcontextlost', () => dlog('WEBGL PERDIDO (modelo pesado o GPU)'));
+  });
+  const venEl = document.getElementById('marimonda3d');
+  venEl.addEventListener('model-loaded', () => dlog('marimonda3d cargado'));
+  venEl.addEventListener('model-error', () => dlog('marimonda3d ERROR de carga'));
+  let arIniciado = false;
+  async function iniciar() {
+    document.getElementById('inicio').classList.add('oculto');
+    if (navigator.vibrate) navigator.vibrate(40);
+    try {
+      if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+        await DeviceOrientationEvent.requestPermission();
+      }
+    } catch (e) {}
+    try {
+      const arrancar = () => {
+        if (arIniciado) return;
+        arIniciado = true;
+        sceneEl.systems['mindar-image-system'].start();
+        miga('ar-start');
+        dlog('start() llamado');
+        setTimeout(() => {
+          const v = document.querySelector('video');
+          if (v) v.style.zIndex = '0';
+          const c = document.querySelector('.a-canvas');
+          if (c) c.style.zIndex = '1';
+          dlog(v ? 'video ' + v.videoWidth + 'x' + v.videoHeight + (v.paused ? ' PAUSADO' : ' ok') : 'SIN VIDEO de camara');
+        }, 3000);
+      };
+      if (sceneEl.hasLoaded) arrancar();
+      else sceneEl.addEventListener('loaded', arrancar, { once: true });
+    } catch (e) {
+      console.error('mindar:', e);
+      status.textContent = 'No se pudo iniciar la cámara — abre el link en Chrome o Safari';
+    }
+  }
+  document.getElementById('btn-inicio').addEventListener('click', iniciar);
+
+  // confeti orbitando con la paleta del mosaico
+  AFRAME.registerComponent('orbiting', {
+    schema: { radius: { default: 0.5 }, speed: { default: 1 }, phase: { default: 0 }, y: { default: 0 } },
+    tick(time) {
+      const t = time / 1000 * this.data.speed + this.data.phase;
+      this.el.object3D.position.set(
+        Math.cos(t) * this.data.radius,
+        this.data.y + Math.sin(t * 2) * 0.05,
+        0.25 + Math.sin(t) * this.data.radius * 0.4
+      );
+    },
+  });
+  const colors = ['#e63329', '#f7a600', '#ffd400', '#37a34a', '#1c7fd6', '#d94de8'];
+  const holder = document.querySelector('#particles');
+  let seed = 13;
+  const rand = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+  for (let i = 0; i < 16; i++) {
+    const p = document.createElement('a-sphere');
+    p.setAttribute('radius', (0.01 + rand() * 0.016).toFixed(3));
+    p.setAttribute('color', colors[Math.floor(rand() * colors.length)]);
+    p.setAttribute('orbiting', `radius: ${(0.4 + rand() * 0.25).toFixed(2)}; speed: ${(0.5 + rand()).toFixed(2)}; phase: ${(rand() * 6.28).toFixed(2)}; y: ${((rand() - 0.4) * 0.35).toFixed(2)}`);
+    p.setAttribute('material', 'shader: flat');
+    holder.appendChild(p);
+  }
+
+  // normalizar el monumento al espacio del target — medir en espacio LOCAL
+  // (MindAR esconde el ancla moviéndola lejos; medir en mundo teletransporta)
+  const mari3d = document.getElementById('marimonda3d');
+  mari3d.addEventListener('model-loaded', () => {
+    const raiz = mari3d.getObject3D('mesh');
+    // solo matrices locales: matrixWorld no sirve mientras MindAR tiene el ancla oculta
+    const box = new THREE.Box3();
+    const recorrer = (obj, matPadre) => {
+      obj.updateMatrix();
+      const m = new THREE.Matrix4().multiplyMatrices(matPadre, obj.matrix);
+      if (obj.isMesh && obj.geometry) {
+        if (!obj.geometry.boundingBox) obj.geometry.computeBoundingBox();
+        box.union(obj.geometry.boundingBox.clone().applyMatrix4(m));
+      }
+      obj.children.forEach((c) => recorrer(c, m));
+    };
+    recorrer(raiz, new THREE.Matrix4());
+    const size = box.getSize(new THREE.Vector3());
+    const mayor = Math.max(size.x, size.y, size.z);
+    if (!isFinite(mayor) || mayor <= 0) { dlog('marimonda3d bbox invalido'); return; }
+    const s = 0.58 / mayor;
+    mari3d.object3D.scale.setScalar(s);
+    const center = box.getCenter(new THREE.Vector3()).multiplyScalar(s);
+    mari3d.object3D.position.set(-center.x, -center.y, -center.z);
+    dlog('marimonda3d norm x' + s.toFixed(3));
+  });
+
+  const anchor = document.querySelector('#anchor');
+  // CLAVE: A-Frame emite targetFound SOLO en el ancla y los eventos no bajan a los
+  // hijos — sin esto, ninguna animación con startEvents: targetFound arranca nunca.
+  const repartir = (evt) => {
+    anchor.querySelectorAll('*').forEach((el) => {
+      if (el.emit) el.emit(evt, null, false);
+    });
+  };
+  anchor.addEventListener('targetFound', () => {
+    miga('target-found');
+    repartir('targetFound');
+    dlog('targetFound repartido a hijos');
+    status.textContent = 'La Marimonda salió a bailar — tócala';
+    status.classList.add('found');
+    if (navigator.vibrate) navigator.vibrate(60);
+  });
+  anchor.addEventListener('targetLost', () => {
+    status.textContent = 'Vuelve a apuntar a la foto del Carnaval';
+    status.classList.remove('found');
+  });
+
+  // tocar el monumento: giro completo + anillo + vibración
+  const mariWrap = document.getElementById('mari-wrap');
+  const ringEl = document.getElementById('ring');
+  mariWrap.addEventListener('click', () => {
+    mariWrap.emit('magia');
+    ringEl.emit('magia');
+    status.textContent = 'Quien lo vive es quien lo goza';
+    if (navigator.vibrate) navigator.vibrate([50, 30, 100]);
+  });
+</script>
+</body>
+</html>

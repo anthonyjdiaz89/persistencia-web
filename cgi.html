@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Video CGI de marca — tu logo sobre la ciudad | Persistencia Digital</title>
+<meta name="description" content="Videos CGI virales sobre sitios emblemáticos reales: tu marca instalada por un helicóptero, una marimonda gigante soplando la Luna del Río. Piezas hechas para detener el scroll." />
+<!-- seo-preciso -->
+<link rel="canonical" href="https://persistenciadigital.com/cgi.html" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Persistencia Digital" />
+<meta property="og:title" content="Video CGI de marca — tu logo sobre la ciudad | Persistencia Digital" />
+<meta property="og:description" content="Videos CGI virales sobre sitios emblemáticos reales: tu marca instalada por un helicóptero, una marimonda gigante soplando la Luna del Río. Piezas hechas para detener el scroll." />
+<meta property="og:url" content="https://persistenciadigital.com/cgi.html" />
+<meta property="og:image" content="https://persistenciadigital.com/assets/og/cgi.jpg" />
+<meta property="og:image:secure_url" content="https://persistenciadigital.com/assets/og/cgi.jpg" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="1080" />
+<meta property="og:image:height" content="1080" />
+<meta property="og:locale" content="es_CO" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Video CGI de marca — tu logo sobre la ciudad | Persistencia Digital" />
+<meta name="twitter:description" content="Videos CGI virales sobre sitios emblemáticos reales: tu marca instalada por un helicóptero, una marimonda gigante soplando la Luna del Río. Piezas hechas para detener el scroll." />
+<meta name="twitter:image" content="https://persistenciadigital.com/assets/og/cgi.jpg" />
+<!-- /seo-preciso -->
+<link rel="icon" type="image/webp" href="assets/isotipo.webp" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #06060c; --surface: rgba(255,255,255,0.045); --border: rgba(255,255,255,0.12);
+    --fg: #f4f6ff; --fg-dim: rgba(244,246,255,0.66);
+    --acento: #4deeea; --grad: linear-gradient(90deg, #4deeea, #3d5afe 45%, #d94de8);
+    --radius: 18px; --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: "Inter", "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--fg); overflow-x: clip; }
+  .banda { height: 3px; background: var(--grad); }
+
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 16px clamp(18px, 4vw, 44px); }
+  .nav-izq { display: flex; align-items: center; gap: 14px; }
+  .volver {
+    display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 999px;
+    font-size: 13.5px; font-weight: 650; color: var(--fg); text-decoration: none;
+    border: 1px solid var(--border); background: var(--surface); transition: background 0.25s, transform 0.25s var(--ease);
+  }
+  .volver:hover { background: rgba(255,255,255,0.12); transform: translateY(-2px); }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 14px; letter-spacing: 0.02em; color: var(--fg); text-decoration: none; }
+  .logo img { width: 26px; height: 26px; }
+  .logo span { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  header { text-align: center; padding: clamp(30px, 6vw, 60px) 20px 10px; }
+  .kicker { font-size: 12px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  h1 { font-size: clamp(30px, 5.5vw, 56px); font-weight: 850; letter-spacing: -0.02em; line-height: 1.04; margin: 12px 0 14px; }
+  .lede { font-size: clamp(15.5px, 2vw, 18px); color: var(--fg-dim); max-width: 640px; margin: 0 auto; line-height: 1.6; }
+
+  main { max-width: 1060px; margin: 0 auto; padding: clamp(30px, 5vw, 60px) clamp(16px, 4vw, 40px) 20px; display: grid; gap: clamp(28px, 5vw, 54px); }
+  .pieza { border-radius: var(--radius); overflow: clip; border: 1px solid var(--border); background: var(--surface); }
+  .pieza video { width: 100%; display: block; aspect-ratio: 16/9; background: #000; }
+  .pieza-info { padding: 20px clamp(16px, 3vw, 28px) 24px; }
+  .pieza-info h2 { font-size: clamp(20px, 3vw, 27px); font-weight: 800; letter-spacing: -0.01em; margin-bottom: 8px; }
+  .pieza-info p { font-size: 14.5px; color: var(--fg-dim); line-height: 1.6; max-width: 720px; }
+
+  .cta-final { text-align: center; padding: clamp(40px, 7vw, 80px) 20px clamp(60px, 8vw, 100px); }
+  .cta-final h2 { font-size: clamp(26px, 4.5vw, 44px); font-weight: 850; letter-spacing: -0.02em; margin-bottom: 12px; }
+  .cta-final p { color: var(--fg-dim); max-width: 560px; margin: 0 auto 26px; line-height: 1.6; }
+  .boton {
+    display: inline-block; padding: 16px 34px; border-radius: 999px; font-size: 16px; font-weight: 800;
+    text-decoration: none; color: #06060c; background: var(--grad);
+    transition: transform 0.25s var(--ease), filter 0.25s; box-shadow: 0 12px 40px rgba(77, 238, 234, 0.18);
+  }
+  .boton:hover { transform: translateY(-3px); filter: brightness(1.1); }
+
+  footer { padding: 26px; text-align: center; font-size: 12.5px; color: var(--fg-dim); border-top: 1px solid var(--border); }
+  footer a { color: var(--fg); }
+</style>
+<script defer src="assets/medicion.js"></script>
+</head>
+<body>
+<div class="banda"></div>
+<nav>
+  <div class="nav-izq">
+    <a class="volver" href="index.html#s-cgi" aria-label="Volver al catálogo"><span aria-hidden="true">←</span><span>Volver</span></a>
+    <a class="logo" href="index.html"><img src="assets/isotipo.webp" alt="" />PERSISTENCIA <span>DIGITAL</span></a>
+  </div>
+</nav>
+
+<header>
+  <div class="kicker">Video CGI de marca</div>
+  <h1>Tu marca, del tamaño<br />de la ciudad</h1>
+  <p class="lede">Piezas CGI sobre sitios emblemáticos reales — el formato viral que detiene el scroll. Grabamos o tomamos el lugar real y montamos lo imposible encima, con física y luz creíbles.</p>
+</header>
+
+<main>
+  <div class="pieza">
+    <video src="cgi/luna-del-rio.mp4" poster="cgi/luna-poster.jpg" controls playsinline preload="metadata"></video>
+    <div class="pieza-info">
+      <h2>Luna del Río — Malecón de Barranquilla</h2>
+      <p>Una marimonda gigante del Carnaval emerge del río Magdalena y sopla la rueda como un molinillo: la Luna del Río se convierte en anillos de luz sobre el malecón. Hecho sobre la foto real del lugar, con el tráfico y la ciudad intactos.</p>
+    </div>
+  </div>
+
+  <div class="pieza">
+    <video src="cgi/catedral.mp4" poster="cgi/catedral-poster.jpg" controls playsinline preload="metadata"></video>
+    <div class="pieza-info">
+      <h2>Catedral Metropolitana — instalación aérea</h2>
+      <p>Un helicóptero de carga cruza la ciudad con el cubo de la marca colgando de cables y lo instala sobre el techo de la catedral, en una sola toma continua con sonido. El dron del sitio es real; el resto es CGI al servicio de la marca.</p>
+    </div>
+  </div>
+</main>
+
+<div class="cta-final">
+  <h2>¿Qué sitio se toma tu marca?</h2>
+  <p>Cuéntanos el lugar y la idea — o déjanos proponerla. Entregamos la pieza lista para pauta y redes, en el formato que necesites.</p>
+  <a class="boton" href="https://wa.me/573207333874?text=Hola%21%20Vi%20los%20videos%20CGI%20en%20persistenciadigital.com%20y%20quiero%20uno%20para%20mi%20marca." target="_blank" rel="noopener">Quiero un CGI para mi marca</a>
+</div>
+
+<footer>
+  Hecho en Barranquilla por <a href="index.html">Persistencia Digital</a> · Sitios reales, imposibles reales
+</footer>
+</body>
+</html>

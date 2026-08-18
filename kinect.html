@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Persistencia Digital — Espejo Mágico</title>
+<link rel="icon" type="image/webp" href="assets/isotipo.webp" />
+<meta name="description" content="Experiencia interactiva estilo Kinect: la cámara te ve y el espejo responde — partículas que siguen tu cuerpo, esqueleto de neón, pinceles de luz, flores que estallan en pétalos y tinta viva que florece donde te mueves." />
+<!-- seo-preciso -->
+<link rel="canonical" href="https://persistenciadigital.com/kinect.html" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Persistencia Digital" />
+<meta property="og:title" content="Persistencia Digital — Espejo Mágico" />
+<meta property="og:description" content="Experiencia interactiva estilo Kinect: la cámara te ve y el espejo responde — partículas que siguen tu cuerpo, esqueleto de neón, pinceles de luz, flores que estallan en pétalos y tinta viva que florece donde te mueves." />
+<meta property="og:url" content="https://persistenciadigital.com/kinect.html" />
+<meta property="og:image" content="https://persistenciadigital.com/assets/og/kinect.jpg" />
+<meta property="og:image:secure_url" content="https://persistenciadigital.com/assets/og/kinect.jpg" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="1080" />
+<meta property="og:image:height" content="1080" />
+<meta property="og:locale" content="es_CO" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Persistencia Digital — Espejo Mágico" />
+<meta name="twitter:description" content="Experiencia interactiva estilo Kinect: la cámara te ve y el espejo responde — partículas que siguen tu cuerpo, esqueleto de neón, pinceles de luz, flores que estallan en pétalos y tinta viva que florece donde te mueves." />
+<meta name="twitter:image" content="https://persistenciadigital.com/assets/og/kinect.jpg" />
+<!-- /seo-preciso -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/pd-ui.css" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: #030308; font-family: 'Inter', system-ui, sans-serif; }
+  #lienzo { position: fixed; inset: 0; width: 100vw; height: 100vh; }
+  .brand-bar { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 30; background: var(--grad); }
+
+  .barra-top {
+    position: fixed; top: 12px; left: 0; right: 0; z-index: 25;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 0 14px; pointer-events: none;
+  }
+  .barra-top > * { pointer-events: auto; }
+  a.back {
+    text-decoration: none; flex-shrink: 0;
+    display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap);
+    padding: 10px 17px; border-radius: 999px; font-size: 13.5px; font-weight: 500;
+    background: var(--glass); border: 1px solid var(--border); color: var(--fg-muted);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+  }
+  a.back:hover { border-color: var(--border-strong); color: var(--fg); }
+
+  .title { position: fixed; top: 76px; left: 0; right: 0; text-align: center; z-index: 20; pointer-events: none; padding: 0 16px; }
+  .title h1 { color: var(--fg); font-size: clamp(17px, 2.4vw, 24px); font-weight: 700; letter-spacing: -0.015em; text-shadow: 0 2px 24px rgba(0,0,0,0.9); }
+  .title p { color: var(--fg-muted); font-size: 13.5px; margin-top: 5px; text-shadow: 0 1px 14px rgba(0,0,0,0.9); }
+
+  .hud { position: fixed; bottom: 22px; left: 0; right: 0; z-index: 20; display: flex; justify-content: center; }
+  .panel-control {
+    pointer-events: auto; display: flex; align-items: center; gap: clamp(12px, 2vw, 22px);
+    padding: 14px clamp(14px, 2vw, 20px); border-radius: var(--radius);
+    background: var(--glass); border: 1px solid var(--border);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+    max-width: calc(100vw - 24px); flex-wrap: wrap; justify-content: center;
+  }
+  .grupo { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+  .grupo-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-dim); padding-left: 3px; }
+  .separador { width: 1px; align-self: stretch; background: var(--border); margin: 4px 0; }
+  .acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .pantalla {
+    position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 22px; text-align: center; padding: 24px;
+    background: radial-gradient(60% 60% at 50% 40%, rgba(61,90,254,0.16), transparent 70%), rgba(6,6,9,0.92);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+  .pantalla.oculta { display: none; }
+  .pantalla h2 { font-size: clamp(30px, 7vw, 52px); font-weight: 900; letter-spacing: -0.03em; color: var(--fg); }
+  .pantalla h2 span { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .pantalla p { color: var(--fg-muted); font-size: 15.5px; max-width: 42ch; line-height: 1.55; }
+  .pasos-juego { display: flex; flex-direction: column; gap: 10px; text-align: left; margin: 6px 0; }
+  .pasos-juego div { display: flex; gap: 12px; align-items: center; color: var(--fg-muted); font-size: 14.5px; }
+  .pasos-juego b {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--grad);
+    color: #06060c; font-size: 13px; font-weight: 800; display: grid; place-items: center;
+  }
+  #estado-cam { font-size: 13px; color: var(--fg-dim); min-height: 18px; }
+
+  @media (max-width: 900px) {
+    .barra-top .pd-mini { padding: 5px; }
+    .barra-top .pd-mini-txt { display: none; }
+    .barra-top .pd-minis { flex-wrap: nowrap; gap: 8px; }
+  }
+  @media (max-width: 560px) { .back-txt { display: none; } a.back { padding: 10px 14px; } .title p { display: none; } }
+  @media (max-width: 720px) {
+    .separador { display: none; }
+    .panel-control { padding: 12px; gap: 10px; width: calc(100vw - 20px); }
+    .grupo { width: 100%; }
+    .acciones { width: 100%; }
+    .acciones .pd-btn { flex: 1; padding: 12px 8px; font-size: 13px; }
+  }
+  button { cursor: pointer; font-family: inherit; }
+  :focus-visible { outline: 2px solid #4deeea; outline-offset: 2px; border-radius: 8px; }
+</style>
+<script defer src="assets/medicion.js"></script>
+</head>
+<body class="pd">
+<div class="brand-bar"></div>
+<div class="barra-top">
+  <a class="back" href="index.html"><span aria-hidden="true">←</span><span class="back-txt">Volver</span></a>
+  <div class="pd-minis pd-minis--compacta">
+    <a class="pd-mini" href="juego.html">
+      <span class="pd-mini-img"><img src="assets/juego-bg.jpg" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Golazo VR</b></span>
+    </a>
+    <a class="pd-mini" href="feria.html">
+      <span class="pd-mini-img"><img src="assets/feria-bg.jpg" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Lluvia de Premios</b></span>
+    </a>
+    <a class="pd-mini" href="ritmo.html">
+      <span class="pd-mini-img"><img src="assets/ritmo-bg.jpg" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Túnel del Ritmo</b></span>
+    </a>
+  </div>
+</div>
+<div class="title">
+  <h1>Espejo Mágico</h1>
+  <p>La cámara te ve y el espejo responde · muévete y mira lo que pasa</p>
+</div>
+
+<canvas id="lienzo"></canvas>
+
+<div class="hud">
+  <div class="panel-control">
+    <div class="grupo">
+      <span class="grupo-label">Modo</span>
+      <div class="acciones">
+        <button class="pd-btn pd-btn--activo" id="modo-particulas" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-3px;margin-right:7px"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><path d="M12 8.5 13.6 12 12 15.5 10.4 12z" fill="currentColor" stroke="none"/></svg>Polvo de estrellas</button>
+        <button class="pd-btn" id="modo-esqueleto" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-3px;margin-right:7px"><circle cx="12" cy="5" r="2.6"/><path d="M12 8v6M12 14l-3.5 6M12 14l3.5 6M6.5 10.5 12 9.5l5.5 1"/></svg>Esqueleto de neón</button>
+        <button class="pd-btn" id="modo-pinceles" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-3px;margin-right:7px"><path d="M14.5 3.5 20.5 9.5 9 21H3v-6z"/><path d="M12.5 5.5 18.5 11.5"/></svg>Pinceles de luz</button>
+        <button class="pd-btn" id="modo-flores" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-3px;margin-right:7px"><circle cx="12" cy="12" r="2.4"/><circle cx="12" cy="5.8" r="2.6"/><circle cx="18.2" cy="12" r="2.6"/><circle cx="12" cy="18.2" r="2.6"/><circle cx="5.8" cy="12" r="2.6"/></svg>Jardín en flor</button>
+        <button class="pd-btn" id="modo-tinta" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-3px;margin-right:7px"><path d="M12 3s6.5 7.2 6.5 11.3A6.5 6.5 0 0 1 5.5 14.3C5.5 10.2 12 3 12 3z"/></svg>Tinta viva</button>
+      </div>
+    </div>
+    <div class="separador"></div>
+    <div class="grupo">
+      <span class="grupo-label">Extras</span>
+      <div class="acciones">
+        <button class="pd-btn" id="btn-cam" type="button">Ver cámara</button>
+        <button class="pd-btn" id="btn-foto" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-3px;margin-right:7px"><path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="14" r="3.4"/></svg>Llevarme mi obra</button>
+        <a class="pd-btn pd-btn--primary" href="https://wa.me/573207333874?text=Hola%21%20Prob%C3%A9%20el%20Espejo%20M%C3%A1gico%20en%20persistenciadigital.com%20y%20quiero%20una%20instalaci%C3%B3n%20interactiva%20para%20mi%20evento." target="_blank" rel="noopener">Quiero esto en mi evento</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pantalla" id="portada">
+  <h2>Espejo <span>Mágico</span></h2>
+  <p>Una instalación interactiva en vivo: la cámara detecta tu cuerpo y tus manos, y el espejo pinta contigo. Sin descargar nada.</p>
+  <div class="pasos-juego">
+    <div><b>1</b><span>Activa la cámara y párate frente a ella.</span></div>
+    <div><b>2</b><span>Muévete: el polvo de estrellas reacciona a tu movimiento.</span></div>
+    <div><b>3</b><span>Cambia de modo: esqueleto de neón, pinceles de luz, un jardín que estalla en pétalos o tinta viva que florece contigo.</span></div>
+  </div>
+  <button class="pd-btn pd-btn--primary" id="btn-empezar" type="button">▶ Activar la cámara</button>
+  <p id="estado-cam"></p>
+</div>
+
+<script type="module">
+  // ══════════ ESPEJO MÁGICO: instalación interactiva estilo TouchDesigner ══════════
+  // Tres modos sobre la cámara en vivo: campo de partículas empujado por tu
+  // movimiento, esqueleto de neón con estelas (pose), y pinceles de luz (manos).
+  const canvas = document.getElementById('lienzo');
+  const ctx = canvas.getContext('2d');
+  let W = 0, H = 0;
+  function resize() {
+    W = canvas.width = innerWidth * Math.min(devicePixelRatio, 2);
+    H = canvas.height = innerHeight * Math.min(devicePixelRatio, 2);
+    canvas.style.width = innerWidth + 'px';
+    canvas.style.height = innerHeight + 'px';
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  const MARCA = ['#4deeea', '#3d5afe', '#7b4de0', '#d94de8'];
+  const est = { modo: 'particulas', verCam: false, on: false, energia: 0 };
+  let video = null, landmarkerManos = null, landmarkerPose = null;
+
+  // ---------- cámara ----------
+  async function getCamera() {
+    const intentos = [
+      { video: { facingMode: 'user', width: { ideal: 960 }, height: { ideal: 540 } }, audio: false },
+      { video: true, audio: false },
+    ];
+    let err;
+    for (const c of intentos) { try { return await navigator.mediaDevices.getUserMedia(c); } catch (e) { err = e; } }
+    throw err;
+  }
+
+  // ---------- campo de movimiento (diferencia de cuadros, malla gruesa) ----------
+  const MW = 96, MH = 54;
+  const motionCanvas = document.createElement('canvas');
+  motionCanvas.width = MW; motionCanvas.height = MH;
+  const mctx = motionCanvas.getContext('2d', { willReadFrequently: true });
+  let prevFrame = null;
+  const campo = new Float32Array(MW * MH); // magnitud de movimiento por celda
+  function sampleMotion() {
+    if (!video || video.readyState < 2) return;
+    mctx.save();
+    mctx.scale(-1, 1);                       // espejo: tu derecha es tu derecha
+    mctx.drawImage(video, -MW, 0, MW, MH);
+    mctx.restore();
+    const d = mctx.getImageData(0, 0, MW, MH).data;
+    if (!prevFrame) { prevFrame = new Uint8ClampedArray(d); return; }
+    let total = 0;
+    for (let i = 0; i < MW * MH; i++) {
+      const j = i * 4;
+      const dif = Math.abs(d[j] - prevFrame[j]) + Math.abs(d[j + 1] - prevFrame[j + 1]) + Math.abs(d[j + 2] - prevFrame[j + 2]);
+      campo[i] = campo[i] * 0.82 + (dif > 42 ? Math.min(1, dif / 240) : 0) * 0.18;
+      total += campo[i];
+    }
+    prevFrame.set(d);
+    est.energia = total / (MW * MH);
+  }
+
+  // ---------- modo 1: polvo de estrellas ----------
+  const NP = 2600;
+  const parts = [];
+  for (let i = 0; i < NP; i++) {
+    parts.push({ x: Math.random(), y: Math.random(), vx: 0, vy: 0, c: MARCA[i % MARCA.length], e: 0 });
+  }
+  function tickParticulas() {
+    for (const p of parts) {
+      // deriva suave + empuje del campo de movimiento donde estés moviéndote
+      const cx = Math.min(MW - 1, Math.max(0, Math.floor(p.x * MW)));
+      const cy = Math.min(MH - 1, Math.max(0, Math.floor(p.y * MH)));
+      const m = campo[cy * MW + cx];
+      if (m > 0.05) {
+        const ang = Math.random() * Math.PI * 2;
+        p.vx += Math.cos(ang) * m * 0.012;
+        p.vy += Math.sin(ang) * m * 0.012 - m * 0.006; // el movimiento las hace subir
+        p.e = Math.min(1, p.e + m * 0.8);
+      }
+      p.vx += Math.sin(p.y * 9 + performance.now() / 4000) * 0.00004;
+      p.vy += 0.00002; // caen lentísimo cuando nadie se mueve
+      p.vx *= 0.96; p.vy *= 0.96;
+      p.x += p.vx; p.y += p.vy;
+      p.e *= 0.97;
+      if (p.x < 0) p.x += 1; if (p.x > 1) p.x -= 1;
+      if (p.y < 0) p.y += 1; if (p.y > 1) p.y -= 1;
+    }
+    ctx.globalCompositeOperation = 'lighter';
+    for (const p of parts) {
+      const r = (1.1 + p.e * 3.4) * (W / 1400);
+      ctx.globalAlpha = 0.25 + p.e * 0.75;
+      ctx.fillStyle = p.c;
+      ctx.beginPath();
+      ctx.arc(p.x * W, p.y * H, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // ---------- modo 2: esqueleto de neón (pose) ----------
+  const HUESOS = [
+    [11, 12], [11, 13], [13, 15], [12, 14], [14, 16],       // brazos
+    [11, 23], [12, 24], [23, 24],                            // torso
+    [23, 25], [25, 27], [24, 26], [26, 28],                  // piernas
+    [27, 31], [28, 32], [15, 19], [16, 20],                  // pies y manos
+    [9, 10],                                                 // boca (sonrisa de neón)
+  ];
+  const rastroPose = []; // historial de poses para las estelas
+  let ultimaPose = 0;
+  function tickEsqueleto(t) {
+    if (landmarkerPose && video && video.readyState >= 2 && t - ultimaPose > 40) {
+      ultimaPose = t;
+      const res = landmarkerPose.detectForVideo(video, t);
+      const lm = res.landmarks && res.landmarks[0];
+      if (lm) {
+        rastroPose.push(lm.map((p) => ({ x: 1 - p.x, y: p.y })));
+        if (rastroPose.length > 10) rastroPose.shift();
+      }
+    }
+    ctx.globalCompositeOperation = 'lighter';
+    rastroPose.forEach((lm, idx) => {
+      const edad = idx / rastroPose.length;      // 0 = viejo, 1 = reciente
+      ctx.globalAlpha = 0.06 + edad * 0.5;
+      ctx.lineWidth = (1 + edad * 4.5) * (W / 1400);
+      ctx.lineCap = 'round';
+      HUESOS.forEach(([a, b], hi) => {
+        const pa = lm[a], pb = lm[b];
+        if (!pa || !pb) return;
+        const grad = ctx.createLinearGradient(pa.x * W, pa.y * H, pb.x * W, pb.y * H);
+        grad.addColorStop(0, MARCA[hi % MARCA.length]);
+        grad.addColorStop(1, MARCA[(hi + 1) % MARCA.length]);
+        ctx.strokeStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(pa.x * W, pa.y * H);
+        ctx.lineTo(pb.x * W, pb.y * H);
+        ctx.stroke();
+      });
+      // articulaciones que brillan
+      if (edad > 0.85) {
+        for (const j of [0, 15, 16, 27, 28]) {
+          const p = lm[j];
+          if (!p) continue;
+          ctx.fillStyle = '#ffffff';
+          ctx.globalAlpha = 0.85;
+          ctx.beginPath();
+          ctx.arc(p.x * W, p.y * H, 5 * (W / 1400), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    });
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // ---------- modo 3: pinceles de luz (manos) ----------
+  const trazos = [[], []]; // historial de puntos por mano
+  let ultimaMano = 0;
+  function tickPinceles(t) {
+    if (landmarkerManos && video && video.readyState >= 2 && t - ultimaMano > 33) {
+      ultimaMano = t;
+      const res = landmarkerManos.detectForVideo(video, t);
+      const found = res.landmarks || [];
+      for (let h = 0; h < 2; h++) {
+        const lm = found[h];
+        if (!lm) { if (trazos[h].length) trazos[h].push(null); continue; }
+        const palma = lm[9];
+        const pinza = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y) < 0.07;
+        trazos[h].push({ x: 1 - palma.x, y: palma.y, t, pinza });
+        if (trazos[h].length > 90) trazos[h].shift();
+      }
+    }
+    ctx.globalCompositeOperation = 'lighter';
+    trazos.forEach((tr, h) => {
+      for (let i = 1; i < tr.length; i++) {
+        const a = tr[i - 1], b = tr[i];
+        if (!a || !b) continue;
+        const edad = i / tr.length;
+        const vel = Math.hypot(b.x - a.x, b.y - a.y);
+        ctx.globalAlpha = 0.05 + edad * 0.6;
+        ctx.lineWidth = Math.max(1.5, (26 - vel * 900)) * (W / 1400) * (b.pinza ? 0.4 : 1);
+        ctx.lineCap = 'round';
+        const grad = ctx.createLinearGradient(a.x * W, a.y * H, b.x * W, b.y * H);
+        grad.addColorStop(0, h ? MARCA[3] : MARCA[0]);
+        grad.addColorStop(1, h ? MARCA[2] : MARCA[1]);
+        ctx.strokeStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(a.x * W, a.y * H);
+        ctx.lineTo(b.x * W, b.y * H);
+        ctx.stroke();
+        // pellizco: chispas
+        if (b.pinza && edad > 0.9) {
+          for (let s = 0; s < 3; s++) {
+            ctx.globalAlpha = 0.7;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(b.x * W + (Math.random() - 0.5) * 40, b.y * H + (Math.random() - 0.5) * 40, 1.8, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+    });
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // ---------- modo 4: jardín en flor (orbes que estallan en pétalos) ----------
+  // referencia: instalación "In Peak Bloom" (TouchDesigner) — orbes de flores
+  // flotando; el movimiento del visitante las revienta en lluvias de pétalos
+  const FLORES = ['#ff9ecb', '#e87bf2', '#ffb35e', '#9be8ff', '#ff6f91'];
+  const orbes = [];
+  const petalos = [];
+  function nuevoOrbe(nacer) {
+    return {
+      x: 0.1 + Math.random() * 0.8,
+      y: 0.15 + Math.random() * 0.5,
+      r: 0.05 + Math.random() * 0.05,      // radio en fracción de pantalla
+      c: FLORES[Math.floor(Math.random() * FLORES.length)],
+      fase: Math.random() * Math.PI * 2,
+      vida: nacer ? 0 : 1,                  // crece al nacer
+      brotes: Array.from({ length: 34 }, () => ({
+        a: Math.random() * Math.PI * 2,
+        d: Math.pow(Math.random(), 0.6),
+        s: 0.3 + Math.random() * 0.9,
+        c: FLORES[Math.floor(Math.random() * FLORES.length)],
+      })),
+    };
+  }
+  for (let i = 0; i < 7; i++) orbes.push(nuevoOrbe(false));
+  function estallar(o) {
+    const n = Math.min(70, 640 - petalos.length);
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const v = 0.004 + Math.random() * 0.011;
+      petalos.push({
+        x: o.x + Math.cos(a) * o.r * Math.random(),
+        y: o.y + Math.sin(a) * o.r * 0.7 * Math.random(),
+        vx: Math.cos(a) * v, vy: Math.sin(a) * v - 0.004,
+        rot: Math.random() * Math.PI * 2, vr: (Math.random() - 0.5) * 0.25,
+        c: Math.random() < 0.7 ? o.c : FLORES[Math.floor(Math.random() * FLORES.length)],
+        vida: 1, tam: 0.6 + Math.random() * 0.9, fase: Math.random() * 6.28,
+      });
+    }
+  }
+  function tickFlores(t) {
+    ctx.globalCompositeOperation = 'lighter';
+    // orbes: flotan, respiran y revientan con tu movimiento
+    for (const o of orbes) {
+      o.vida = Math.min(1, o.vida + 0.008);
+      o.x += Math.sin(t / 5200 + o.fase) * 0.0005;
+      o.y += Math.cos(t / 6100 + o.fase) * 0.0004;
+      const cx = Math.min(MW - 1, Math.max(0, Math.floor(o.x * MW)));
+      const cy = Math.min(MH - 1, Math.max(0, Math.floor(o.y * MH)));
+      let m = 0;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+        const xx = cx + dx, yy = cy + dy;
+        if (xx >= 0 && xx < MW && yy >= 0 && yy < MH) m = Math.max(m, campo[yy * MW + xx]);
+      }
+      if (m > 0.22 && o.vida > 0.55) {
+        estallar(o);
+        Object.assign(o, nuevoOrbe(true));
+        continue;
+      }
+      const R = o.r * o.vida * W;
+      for (const b of o.brotes) {
+        const px = o.x * W + Math.cos(b.a + t / 3000) * b.d * R;
+        const py = o.y * H + Math.sin(b.a + t / 3400) * b.d * R * 0.75;
+        const rr = b.s * 7 * o.vida * (W / 1400) * (1 + 0.15 * Math.sin(t / 700 + b.a * 3));
+        ctx.globalAlpha = 0.16 + 0.1 * o.vida;
+        ctx.fillStyle = b.c;
+        ctx.beginPath();
+        ctx.arc(px, py, Math.max(0.5, rr), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    // pétalos: caen aleteando
+    for (let i = petalos.length - 1; i >= 0; i--) {
+      const p = petalos[i];
+      p.vx += Math.sin(t / 900 + p.fase) * 0.00012; // aleteo
+      p.vy += 0.00011;                               // gravedad de pétalo
+      p.vx *= 0.985; p.vy *= 0.985;
+      p.x += p.vx; p.y += p.vy;
+      p.rot += p.vr; p.vida -= 0.004;
+      if (p.vida <= 0 || p.y > 1.05) { petalos.splice(i, 1); continue; }
+      const s = p.tam * 9 * (W / 1400);
+      ctx.save();
+      ctx.translate(p.x * W, p.y * H);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha = Math.min(0.75, p.vida);
+      ctx.fillStyle = p.c;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, s, s * 0.45, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // ---------- modo 5: tinta viva (reacción-difusión Gray-Scott) ----------
+  // el cuerpo siembra "tinta" en un campo químico que florece en patrones
+  // orgánicos (corales, células, venas) — la paleta rota sola con el tiempo
+  const RW = 192, RH = 108;
+  let rdA = new Float32Array(RW * RH).fill(1);
+  let rdB = new Float32Array(RW * RH);
+  let rdA2 = new Float32Array(RW * RH);
+  let rdB2 = new Float32Array(RW * RH);
+  const rdCanvas = document.createElement('canvas');
+  rdCanvas.width = RW; rdCanvas.height = RH;
+  const rdCtx = rdCanvas.getContext('2d');
+  const rdImg = rdCtx.createImageData(RW, RH);
+  function sembrarTinta() {
+    rdA.fill(1); rdB.fill(0);
+    for (let s = 0; s < 14; s++) {
+      const x = 6 + Math.floor(Math.random() * (RW - 12));
+      const y = 6 + Math.floor(Math.random() * (RH - 12));
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) rdB[(y + dy) * RW + (x + dx)] = 1;
+    }
+  }
+  sembrarTinta();
+  function tickTinta(t) {
+    // tu movimiento inyecta tinta donde te mueves
+    for (let my = 0; my < MH; my++) for (let mx = 0; mx < MW; mx++) {
+      if (campo[my * MW + mx] > 0.12) {
+        const x = Math.floor((mx / MW) * RW), y = Math.floor((my / MH) * RH);
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx, yy = y + dy;
+          if (xx > 0 && xx < RW - 1 && yy > 0 && yy < RH - 1) rdB[yy * RW + xx] = 1;
+        }
+      }
+    }
+    // química Gray-Scott (parámetros de "coral"; laplaciano clásico de 9 puntos
+    // con pesos 0.2/0.05 — con el de 5 puntos mal escalado la tinta se muere)
+    const F = 0.0545, K = 0.062, DA = 1.0, DB = 0.5;
+    for (let paso = 0; paso < 8; paso++) {
+      for (let y = 1; y < RH - 1; y++) {
+        for (let x = 1; x < RW - 1; x++) {
+          const i = y * RW + x;
+          const a = rdA[i], b = rdB[i];
+          const lapA = (rdA[i - 1] + rdA[i + 1] + rdA[i - RW] + rdA[i + RW]) * 0.2
+                     + (rdA[i - RW - 1] + rdA[i - RW + 1] + rdA[i + RW - 1] + rdA[i + RW + 1]) * 0.05 - a;
+          const lapB = (rdB[i - 1] + rdB[i + 1] + rdB[i - RW] + rdB[i + RW]) * 0.2
+                     + (rdB[i - RW - 1] + rdB[i - RW + 1] + rdB[i + RW - 1] + rdB[i + RW + 1]) * 0.05 - b;
+          const abb = a * b * b;
+          // acotado a [0,1]: sin el clamp la reacción diverge a NaN en pocos pasos
+          let na = a + (DA * lapA - abb + F * (1 - a));
+          let nb = b + (DB * lapB + abb - (K + F) * b);
+          rdA2[i] = na < 0 ? 0 : na > 1 ? 1 : na;
+          rdB2[i] = nb < 0 ? 0 : nb > 1 ? 1 : nb;
+        }
+      }
+      [rdA, rdA2] = [rdA2, rdA]; [rdB, rdB2] = [rdB2, rdB];
+    }
+    // pintar: paleta que rota sola (azul célula → agua → lila → ámbar)
+    const hueBase = (t / 90000) * 360;
+    const d = rdImg.data;
+    for (let i = 0; i < RW * RH; i++) {
+      const v = Math.max(0, Math.min(1, rdB[i] * 2.6));
+      const hue = (hueBase + 190 + v * 90) % 360;
+      const l = 6 + v * 58;
+      // hsl -> rgb rápido
+      const c = (1 - Math.abs(2 * l / 100 - 1)) * 0.85;
+      const hp = hue / 60, xco = c * (1 - Math.abs((hp % 2) - 1));
+      let r = 0, g = 0, bl = 0;
+      if (hp < 1) { r = c; g = xco; } else if (hp < 2) { r = xco; g = c; }
+      else if (hp < 3) { g = c; bl = xco; } else if (hp < 4) { g = xco; bl = c; }
+      else if (hp < 5) { r = xco; bl = c; } else { r = c; bl = xco; }
+      const m = l / 100 - c / 2;
+      const j = i * 4;
+      d[j] = (r + m) * 255; d[j + 1] = (g + m) * 255; d[j + 2] = (bl + m) * 255; d[j + 3] = 255;
+    }
+    rdCtx.putImageData(rdImg, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(rdCanvas, 0, 0, W, H);
+  }
+
+  // ---------- bucle ----------
+  function tick(t) {
+    requestAnimationFrame(tick);
+    if (!est.on) return;
+    sampleMotion();
+    // la estela: en vez de limpiar, se desvanece (el look TouchDesigner)
+    const fade = est.modo === 'particulas' ? 0.10 : est.modo === 'esqueleto' ? 0.16 : est.modo === 'flores' ? 0.12 : 0.06;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(3, 3, 8, ' + fade + ')';
+    ctx.fillRect(0, 0, W, H);
+    if (est.verCam && video && video.readyState >= 2) {
+      ctx.save();
+      ctx.globalAlpha = 0.16;
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, -W, 0, W, H);
+      ctx.restore();
+      ctx.globalAlpha = 1;
+    }
+    if (est.modo === 'particulas') tickParticulas();
+    else if (est.modo === 'esqueleto') tickEsqueleto(t);
+    else if (est.modo === 'flores') tickFlores(t);
+    else if (est.modo === 'tinta') tickTinta(t);
+    else tickPinceles(t);
+  }
+  requestAnimationFrame(tick);
+
+  // ---------- arranque ----------
+  const estadoCam = document.getElementById('estado-cam');
+  document.getElementById('btn-empezar').addEventListener('click', async () => {
+    estadoCam.textContent = 'Pidiendo permiso de cámara…';
+    try {
+      const stream = await getCamera();
+      video = document.createElement('video');
+      video.srcObject = stream;
+      video.muted = true; video.playsInline = true;
+      await video.play();
+      est.on = true;
+      document.getElementById('portada').classList.add('oculta');
+      // los detectores cargan en segundo plano: el polvo de estrellas ya funciona sin ellos
+      cargarDetectores();
+    } catch (e) {
+      estadoCam.textContent = e.name === 'NotAllowedError'
+        ? 'Permiso bloqueado — habilítalo en el candado del navegador y vuelve a intentar'
+        : 'La cámara no respondió (' + e.name + ')';
+    }
+  });
+
+  async function cargarDetectores() {
+    try {
+      const mp = await import('./assets/mediapipe/vision_bundle.mjs');
+      const files = await mp.FilesetResolver.forVisionTasks('assets/mediapipe/wasm');
+      landmarkerManos = await mp.HandLandmarker.createFromOptions(files, {
+        baseOptions: { modelAssetPath: 'assets/mediapipe/hand_landmarker.task', delegate: 'GPU' },
+        runningMode: 'VIDEO', numHands: 2,
+      });
+      landmarkerPose = await mp.PoseLandmarker.createFromOptions(files, {
+        baseOptions: { modelAssetPath: 'assets/mediapipe/pose_landmarker_lite.task', delegate: 'GPU' },
+        runningMode: 'VIDEO', numPoses: 1,
+      });
+    } catch (e) { console.warn('detectores:', e); }
+  }
+
+  // ---------- modos y extras ----------
+  const botones = { particulas: document.getElementById('modo-particulas'), esqueleto: document.getElementById('modo-esqueleto'), pinceles: document.getElementById('modo-pinceles'), flores: document.getElementById('modo-flores'), tinta: document.getElementById('modo-tinta') };
+  for (const [modo, btn] of Object.entries(botones)) {
+    btn.addEventListener('click', () => {
+      est.modo = modo;
+      Object.values(botones).forEach((b) => b.classList.remove('pd-btn--activo'));
+      btn.classList.add('pd-btn--activo');
+      ctx.fillStyle = '#030308';
+      ctx.fillRect(0, 0, W, H);
+      rastroPose.length = 0;
+      trazos[0].length = 0; trazos[1].length = 0;
+      petalos.length = 0;
+      if (modo === 'tinta') sembrarTinta();
+    });
+  }
+  document.getElementById('btn-cam').addEventListener('click', (e) => {
+    est.verCam = !est.verCam;
+    e.target.classList.toggle('pd-btn--activo', est.verCam);
+  });
+  // llévate tu obra: descarga el lienzo tal como está
+  document.getElementById('btn-foto').addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'espejo-magico.png';
+    a.click();
+  });
+
+  // gancho e2e
+  window.__kinect = { est, parts, rastroPose, trazos, campo, orbes, petalos, get rdB() { return rdB; }, get video() { return video; } };
+</script>
+</body>
+</html>

@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Persistencia Digital — Cubo Inmersivo</title>
+<link rel="icon" type="image/webp" href="assets/isotipo.webp" />
+<meta name="description" content="Entra al cubo: mapping inmersivo 360 para eventos, en tu navegador." />
+<!-- seo-preciso -->
+<link rel="canonical" href="https://persistenciadigital.com/cubo.html" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Persistencia Digital" />
+<meta property="og:title" content="Persistencia Digital — Cubo Inmersivo" />
+<meta property="og:description" content="Entra al cubo: mapping inmersivo 360 para eventos, en tu navegador." />
+<meta property="og:url" content="https://persistenciadigital.com/cubo.html" />
+<meta property="og:image" content="https://persistenciadigital.com/assets/og/cubo.jpg" />
+<meta property="og:image:secure_url" content="https://persistenciadigital.com/assets/og/cubo.jpg" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="1080" />
+<meta property="og:image:height" content="1080" />
+<meta property="og:locale" content="es_CO" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Persistencia Digital — Cubo Inmersivo" />
+<meta name="twitter:description" content="Entra al cubo: mapping inmersivo 360 para eventos, en tu navegador." />
+<meta name="twitter:image" content="https://persistenciadigital.com/assets/og/cubo.jpg" />
+<!-- /seo-preciso -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/pd-ui.css" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: #030304; font-family: 'Inter', system-ui, sans-serif; }
+  #scene { position: fixed; inset: 0; cursor: grab; }
+  #scene.dragging { cursor: grabbing; }
+  .brand-bar { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 30; background: var(--grad); }
+  .hud { position: fixed; left: 0; right: 0; z-index: 20; display: flex; justify-content: center; pointer-events: none; }
+  .hud.top { top: 18px; }
+  .hud.bottom { bottom: 22px; }
+  .chip {
+    background: var(--glass); border: 1px solid var(--border); border-radius: 999px;
+    padding: 10px 20px; font-size: 13.5px; color: var(--fg-muted); font-weight: 500;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  }
+  /* panel de control agrupado: una sola pieza de vidrio, no botones sueltos */
+  .panel-control {
+    pointer-events: auto;
+    display: flex; align-items: center; gap: clamp(12px, 2vw, 22px);
+    padding: 14px clamp(14px, 2vw, 20px); border-radius: var(--radius);
+    background: var(--glass); border: 1px solid var(--border);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+    max-width: calc(100vw - 24px); flex-wrap: wrap; justify-content: center;
+  }
+  .grupo { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+  .grupo[hidden] { display: none; }
+  .grupo-label {
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--fg-dim); padding-left: 3px;
+  }
+  .separador { width: 1px; align-self: stretch; background: var(--border); margin: 4px 0; }
+  .separador[hidden] { display: none; }
+  /* debajo de la barra superior, para no chocar con las miniaturas */
+  .title { position: fixed; top: 76px; left: 0; right: 0; text-align: center; z-index: 20; pointer-events: none; padding: 0 16px; }
+  .title h1 { color: var(--fg); font-size: clamp(17px, 2.4vw, 24px); font-weight: 700; letter-spacing: -0.015em; text-shadow: 0 2px 24px rgba(0,0,0,0.9); }
+  .title p { color: var(--fg-muted); font-size: 13.5px; margin-top: 5px; text-shadow: 0 1px 14px rgba(0,0,0,0.9); }
+  #loader {
+    position: fixed; inset: 0; z-index: 40; background: #030304;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+    transition: opacity 0.6s; color: #9ba0b6; font-size: 14px;
+  }
+  #loader.hide { opacity: 0; pointer-events: none; }
+  .spinner { width: 46px; height: 46px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.12); border-top-color: #4deeea; animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  /* barra superior: volver a la izquierda, saltar a otra experiencia a la derecha */
+  .barra-top {
+    position: fixed; top: 12px; left: 0; right: 0; z-index: 25;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 0 14px; pointer-events: none;
+  }
+  .barra-top > * { pointer-events: auto; }
+  a.back {
+    text-decoration: none; flex-shrink: 0;
+    display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap);
+    padding: 10px 17px; border-radius: 999px; font-size: 13.5px; font-weight: 500;
+    background: var(--glass); border: 1px solid var(--border); color: var(--fg-muted);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+  }
+  a.back:hover { border-color: var(--border-strong); color: var(--fg); }
+  /* VRButton reaplica estilos inline async: se pisa con important */
+  #VRButton { left: auto !important; right: 18px !important; bottom: 18px !important; transform: none !important; }
+  /* en táctiles el WebXR nativo (siempre estéreo en Android) se oculta:
+     los modos móviles son "Vista 360" y "Gafas VR" propios */
+  @media (pointer: coarse) { #VRButton { display: none !important; } }
+
+  button { cursor: pointer; font-family: inherit; }
+  :focus-visible { outline: 2px solid #4deeea; outline-offset: 2px; border-radius: 8px; }
+  @media (max-width: 900px) {
+    /* en pantalla angosta la barra de arriba deja solo las imágenes, en una sola fila */
+    .barra-top .pd-mini { padding: 5px; }
+    .barra-top .pd-mini-txt { display: none; }
+    .barra-top .pd-minis { flex-wrap: nowrap; gap: 8px; }
+  }
+  @media (max-width: 560px) {
+    /* la flecha se explica sola: el texto solo estorba cuando no cabe */
+    .back-txt { display: none; }
+    a.back { padding: 10px 14px; }
+  }
+  @media (max-width: 720px) {
+    .separador { display: none; }
+    .panel-control { padding: 12px; gap: 10px; width: calc(100vw - 20px); }
+    .grupo { width: 100%; min-width: 0; }
+    .acciones { display: flex; gap: 8px; width: 100%; }
+    .acciones .pd-btn { flex: 1; padding: 12px 10px; font-size: 13.5px; }
+    /* una sola fila que se desliza con el dedo: el panel no crece a media pantalla */
+    .panel-control .pd-minis { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+    .panel-control .pd-minis::-webkit-scrollbar { display: none; }
+    .panel-control .pd-mini { flex-shrink: 0; }
+    .title p { display: none; }
+  }
+
+  /* ---- tutorial de inicio (tour guiado, 3 pasos) ---- */
+  #tour {
+    position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center;
+    padding: 0 16px 12vh; pointer-events: none;
+  }
+  #tour.hidden { display: none; }
+  .tour-card {
+    pointer-events: auto; width: min(480px, 94vw);
+    background: rgba(8,8,16,0.72); border: 1px solid rgba(255,255,255,0.16); border-radius: 22px;
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    padding: 26px 26px 20px; text-align: center; color: #f3f4f9;
+    box-shadow: 0 24px 70px rgba(0,0,0,0.55), 0 0 60px rgba(123,77,224,0.14);
+    transform: translateY(0); opacity: 1; transition: transform 0.28s ease, opacity 0.28s ease;
+  }
+  .tour-card.swap { transform: translateY(10px); opacity: 0; }
+  .tour-icon { width: 58px; height: 58px; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center;
+    border-radius: 18px; background: linear-gradient(135deg, rgba(77,238,234,0.16), rgba(217,77,232,0.16));
+    border: 1px solid rgba(255,255,255,0.14); }
+  .tour-icon svg { width: 30px; height: 30px; stroke: #4deeea; }
+  .tour-card h2 { font-size: 19px; font-weight: 700; margin-bottom: 6px; }
+  .tour-card p { font-size: 14px; color: #b9bdcd; line-height: 1.55; min-height: 44px; }
+  .tour-dots { display: flex; gap: 7px; justify-content: center; margin: 14px 0 16px; }
+  .tour-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.22); transition: all 0.25s; }
+  .tour-dots i.on { width: 22px; border-radius: 999px; background: linear-gradient(90deg,#4deeea,#d94de8); }
+  .tour-actions { display: flex; gap: 10px; }
+  .tour-skip {
+    flex: 1; min-height: 46px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.18);
+    background: transparent; color: #9ba0b6; font-size: 14.5px; transition: border-color 0.2s, color 0.2s;
+  }
+  .tour-skip:hover { border-color: rgba(255,255,255,0.4); color: #f3f4f9; }
+  .tour-next {
+    flex: 1.6; min-height: 46px; border-radius: 999px; border: none; font-size: 15px; font-weight: 700; color: #06060c;
+    background: linear-gradient(90deg,#4deeea,#3d5afe 45%,#d94de8 130%); transition: filter 0.2s, transform 0.2s;
+  }
+  .tour-next:hover { filter: brightness(1.12); transform: translateY(-1px); }
+  /* vive junto a "Volver" en la barra: abajo el panel de control ocupa todo el ancho */
+  .barra-izq { display: flex; align-items: center; gap: 8px; }
+  #tour-reopen {
+    flex-shrink: 0; width: var(--tap); height: var(--tap); border-radius: 50%;
+    background: var(--glass); border: 1px solid var(--border); color: var(--fg-muted); font-size: 17px; font-weight: 700;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); transition: border-color 0.2s, color 0.2s;
+  }
+  #tour-reopen:hover { border-color: rgba(77,238,234,0.6); color: #4deeea; }
+  @media (prefers-reduced-motion: reduce) {
+    .tour-card, .tour-dots i, .tour-next, a.back { transition: none; }
+  }
+</style>
+<script defer src="assets/medicion.js"></script>
+</head>
+<body>
+<div class="brand-bar"></div>
+<div id="loader"><div class="spinner"></div><span>Preparando el cubo…</span></div>
+<div class="barra-top">
+  <div class="barra-izq">
+    <a class="back" href="index.html"><span aria-hidden="true">←</span><span class="back-txt">Volver</span></a>
+    <button id="tour-reopen" type="button" aria-label="Ver el tutorial de nuevo" title="Ver el tutorial">?</button>
+  </div>
+  <div class="pd-minis pd-minis--compacta">
+    <a class="pd-mini" href="fachada.html">
+      <span class="pd-mini-img"><img src="assets/mapping-vitrales.jpg" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Mapping</b></span>
+    </a>
+    <a class="pd-mini" href="ar.html">
+      <span class="pd-mini-img"><img src="assets/estadio-bg.jpg?v=3" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Metropolitano</b></span>
+    </a>
+    <a class="pd-mini" href="ar-carnaval.html">
+      <span class="pd-mini-img"><img src="assets/carnaval-bg.jpg?v=3" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Carnaval</b></span>
+    </a>
+    <a class="pd-mini" href="ar-ventana.html">
+      <span class="pd-mini-img"><img src="assets/ventana-bg.jpg?v=3" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Ventana</b></span>
+    </a>
+  </div>
+</div>
+<div class="title">
+  <h1>Estás dentro del cubo</h1>
+  <p>Arrastra para mirar · WASD o joystick para caminar · gafas para VR</p>
+</div>
+<div id="scene"></div>
+<div class="hud bottom">
+  <div class="panel-control">
+    <div class="grupo">
+      <span class="grupo-label">Escena del cubo</span>
+      <div class="pd-minis pd-minis--compacta" id="shows"></div>
+    </div>
+    <div class="separador" id="sep-vista" hidden></div>
+    <div class="grupo" id="grupo-vista" hidden>
+      <span class="grupo-label">Cómo lo ves</span>
+      <div class="acciones" id="modos"></div>
+    </div>
+    <div class="separador" id="sep-ix" hidden></div>
+    <div class="grupo" id="grupo-ix" hidden>
+      <span class="grupo-label">Interacción</span>
+      <div id="acciones"></div>
+    </div>
+    <div class="separador"></div>
+    <div class="grupo">
+      <span class="grupo-label">Tu evento</span>
+      <div class="acciones"><a class="pd-btn pd-btn--primary" style="text-decoration:none" href="https://wa.me/573207333874?text=Hola%21%20Prob%C3%A9%20el%20cubo%20inmersivo%20en%20persistenciadigital.com%20y%20quiero%20uno%20para%20mi%20evento." target="_blank" rel="noopener">Quiero un cubo así</a></div>
+      <p style="margin:8px 2px 0;font-size:10.5px;line-height:1.5;color:rgba(255,255,255,0.35)">Modelos 3D (CC-BY, Sketchfab): megalodón de Pablo Medrano · tortuga de kenchoo</p>
+    </div>
+  </div>
+</div>
+
+<!-- tutorial de inicio -->
+<div id="tour" class="hidden" role="dialog" aria-label="Tutorial de la experiencia">
+  <div class="tour-card">
+    <div class="tour-icon" id="tour-icon"></div>
+    <h2 id="tour-title"></h2>
+    <p id="tour-text"></p>
+    <div class="tour-dots" id="tour-dots"></div>
+    <div class="tour-actions">
+      <button class="tour-skip" id="tour-skip" type="button">Saltar</button>
+      <button class="tour-next" id="tour-next" type="button">Siguiente</button>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/" } }
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { VRButton } from 'three/addons/webxr/VRButton.js';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+  const SHOWS = [
+    // interactive: capa con cámara (burbujas + pez que sigue las manos)
+    // video: versión animada 360 (si el archivo existe, reemplaza a la foto)
+    // fondo SIEMPRE foto fija (nitidez): la vida la ponen los peces de la capa interactiva
+    // 3 mundos, mismo estilo: 360 al fondo + capa 3D viva a la profundidad de la imagen
+    { id: 'acuario', label: 'Acuario', file: 'assets/pano-acuario.jpg?v=4', hi: 'assets/pano-acuario-4k.jpg?v=5', interactive: true },
+    { id: 'quince', label: 'Noche de Faroles', file: 'assets/pano-quince.jpg?v=5', hi: 'assets/pano-quince-4k.jpg?v=6', interactive: true },
+    { id: 'galaxia', label: 'Galaxia', file: 'assets/pano-galaxia.jpg?v=3', hi: 'assets/pano-galaxia-4k.jpg?v=3', interactive: true },
+  ];
+
+  const container = document.getElementById('scene');
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  container.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.01, 100);
+  // rig caminable: la cámara vive dentro de un grupo que se mueve por el cubo (POV de persona)
+  const rig = new THREE.Group();
+  rig.position.set(0, -1.2, 0); // el "piso" del cubo queda a -13; altura de ojos ≈ 1.7 relativa
+  rig.add(camera);
+  scene.add(rig);
+  // VR directo desde la página (gafas WebXR)
+  renderer.xr.enabled = true;
+  const vrBtn = VRButton.createButton(renderer);
+  vrBtn.style.left = 'auto'; vrBtn.style.right = '18px'; vrBtn.style.bottom = '18px'; vrBtn.style.transform = 'none';
+  document.body.appendChild(vrBtn);
+
+  // ---- VR móvil (estilo Cardboard): pantalla dividida + giroscopio ----
+  const mvr = { on: false, quat: new THREE.Quaternion(), hasGyro: false };
+  const stereo = new THREE.StereoCamera();
+  stereo.eyeSep = 0.064;
+  const _zee = new THREE.Vector3(0, 0, 1), _euler = new THREE.Euler(), _q0 = new THREE.Quaternion();
+  const _q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
+  const deg = Math.PI / 180;
+  addEventListener('deviceorientation', (e) => {
+    if (e.alpha === null) return;
+    mvr.hasGyro = true;
+    const orient = (screen.orientation && screen.orientation.angle ? screen.orientation.angle : window.orientation || 0) * deg;
+    _euler.set(e.beta * deg, e.alpha * deg, -e.gamma * deg, 'YXZ');
+    mvr.quat.setFromEuler(_euler);
+    mvr.quat.multiply(_q1);
+    mvr.quat.multiply(_q0.setFromAxisAngle(_zee, -orient));
+  });
+
+  // dos modos en celular: "Vista 360" (una ventana, giroscopio) y "Gafas VR" (estéreo)
+  // viven dentro del panel de control, no sueltos sobre la escena
+  const modosEl = document.getElementById('modos');
+  const grupoVista = document.getElementById('grupo-vista');
+  const sepVista = document.getElementById('sep-vista');
+  const monoBtn = document.createElement('button');
+  monoBtn.type = 'button';
+  monoBtn.className = 'pd-btn';
+  monoBtn.textContent = 'Vista 360';
+  modosEl.appendChild(monoBtn);
+  const stereoBtn = document.createElement('button');
+  stereoBtn.type = 'button';
+  stereoBtn.className = 'pd-btn';
+  stereoBtn.textContent = 'Gafas VR';
+  modosEl.appendChild(stereoBtn);
+  const mvrExit = document.createElement('button');
+  mvrExit.style.cssText = 'position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:60;min-height:44px;padding:10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,0.3);background:rgba(5,5,10,0.75);color:#f3f4f9;font-size:14px;display:none;';
+  document.body.appendChild(mvrExit);
+  // el grupo solo tiene sentido en táctiles: en escritorio manda el botón WebXR
+  if ('ontouchstart' in window) grupoVista.hidden = sepVista.hidden = false;
+  async function enterMobileVR(useStereo) {
+    // iOS exige pedir permiso del sensor desde un gesto del usuario
+    if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+      try { await DeviceOrientationEvent.requestPermission(); } catch (e) {}
+    }
+    try { await document.documentElement.requestFullscreen(); } catch (e) {}
+    if (useStereo) {
+      try { await screen.orientation.lock('landscape'); } catch (e) {}
+    }
+    mvr.on = true;
+    mvr.stereo = useStereo;
+    grupoVista.hidden = sepVista.hidden = true;
+    mvrExit.textContent = useStereo ? 'Salir de VR' : 'Salir de 360';
+    mvrExit.style.display = 'block';
+    if (useStereo) {
+      // gafas: pantalla limpia, sin HUD ni joystick
+      document.querySelectorAll('.hud, .title, #tour-reopen, .barra-top').forEach((el) => (el.style.visibility = 'hidden'));
+      joyEl.style.display = 'none';
+      if (vrBtn) vrBtn.style.display = 'none';
+    } else {
+      // ventana mágica: giras el celular para mirar, y el joystick sigue para caminar
+      document.querySelectorAll('.title, #tour-reopen').forEach((el) => (el.style.visibility = 'hidden'));
+    }
+  }
+  function exitMobileVR() {
+    mvr.on = false;
+    mvr.stereo = false;
+    mvrExit.style.display = 'none';
+    if ('ontouchstart' in window) grupoVista.hidden = sepVista.hidden = false;
+    document.querySelectorAll('.hud, .title, #tour-reopen, .barra-top').forEach((el) => (el.style.visibility = ''));
+    if ('ontouchstart' in window) joyEl.style.display = 'block';
+    try { screen.orientation.unlock(); } catch (e) {}
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    renderer.setViewport(0, 0, innerWidth, innerHeight);
+    renderer.setScissorTest(false);
+  }
+  monoBtn.addEventListener('click', () => enterMobileVR(false));
+  stereoBtn.addEventListener('click', () => enterMobileVR(true));
+  mvrExit.addEventListener('click', exitMobileVR);
+
+  // el "cubo" del mapping: un cubo gigante con la panorámica proyectada por dentro,
+  // con aristas visibles para que se LEA como cubo (el producto que vendemos)
+  const loader = new THREE.TextureLoader();
+  // la proyección va sobre una esfera envolvente: cero artefactos de caras/esquinas;
+  // el wireframe del cubo (abajo) es el contenedor visual del producto
+  const geo = new THREE.SphereGeometry(34, 64, 48);
+  const mat = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
+  const cube = new THREE.Mesh(geo, mat);
+  scene.add(cube);
+
+  // aristas neón del cubo
+  const edges = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(25.95, 25.95, 25.95)),
+    new THREE.LineBasicMaterial({ color: 0x4deeea, transparent: true, opacity: 0.35 })
+  );
+  scene.add(edges);
+
+  // partículas flotando dentro del cubo
+  const pGeo = new THREE.BufferGeometry();
+  const N = 260;
+  const pos = new Float32Array(N * 3);
+  let s = 7;
+  const rand = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+  for (let i = 0; i < N; i++) {
+    pos[i * 3] = (rand() - 0.5) * 24;
+    pos[i * 3 + 1] = (rand() - 0.5) * 24;
+    pos[i * 3 + 2] = (rand() - 0.5) * 24;
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const particles = new THREE.Points(pGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.035, transparent: true, opacity: 0.55 }));
+  scene.add(particles);
+
+  // proyección equirectangular sobre el cubo: usamos un ShaderMaterial simple
+  // que muestrea la textura por dirección (como un skybox equirect)
+  const shader = new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    uniforms: { tex: { value: null }, fade: { value: 0 } },
+    vertexShader: `
+      varying vec3 vDir;
+      void main() {
+        vDir = position;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }`,
+    fragmentShader: `
+      uniform sampler2D tex;
+      uniform float fade;
+      varying vec3 vDir;
+      const float PI = 3.14159265;
+      void main() {
+        vec3 d = normalize(vDir);
+        vec2 uv = vec2(atan(d.z, d.x) / (2.0 * PI) + 0.5, asin(clamp(d.y, -1.0, 1.0)) / PI + 0.5);
+        vec4 c = texture2D(tex, uv);
+        gl_FragColor = vec4(c.rgb * fade, 1.0);
+      }`,
+  });
+  cube.material = shader;
+
+  // movimiento caminable dentro del cubo
+  const keys = {};
+  addEventListener('keydown', (e) => (keys[e.key.toLowerCase()] = true));
+  addEventListener('keyup', (e) => (keys[e.key.toLowerCase()] = false));
+  // joystick táctil (aparece en móvil, esquina inferior izquierda)
+  const joy = { active: false, dx: 0, dy: 0 };
+  const joyEl = document.createElement('div');
+  joyEl.style.cssText = 'position:fixed;left:22px;bottom:96px;width:104px;height:104px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.25);background:rgba(5,5,10,0.4);z-index:25;touch-action:none;display:none;';
+  const knob = document.createElement('div');
+  knob.style.cssText = 'position:absolute;left:50%;top:50%;width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#4deeea55,#d94de855);border:1px solid rgba(255,255,255,0.4);transform:translate(-50%,-50%);';
+  joyEl.appendChild(knob);
+  document.body.appendChild(joyEl);
+  // el panel de control cambia de alto según los grupos visibles: el joystick se acomoda encima
+  const panelCtrl = document.querySelector('.panel-control');
+  const acomodarJoystick = () => {
+    joyEl.style.bottom = Math.round(panelCtrl.getBoundingClientRect().height) + 36 + 'px';
+  };
+  new ResizeObserver(acomodarJoystick).observe(panelCtrl);
+  acomodarJoystick();
+  if ('ontouchstart' in window) joyEl.style.display = 'block';
+  joyEl.addEventListener('touchstart', (e) => { joy.active = true; e.preventDefault(); }, { passive: false });
+  joyEl.addEventListener('touchmove', (e) => {
+    const r = joyEl.getBoundingClientRect();
+    const t = e.touches[0];
+    joy.dx = Math.max(-1, Math.min(1, (t.clientX - (r.left + r.width / 2)) / 40));
+    joy.dy = Math.max(-1, Math.min(1, (t.clientY - (r.top + r.height / 2)) / 40));
+    knob.style.transform = `translate(calc(-50% + ${joy.dx * 26}px), calc(-50% + ${joy.dy * 26}px))`;
+    e.preventDefault();
+  }, { passive: false });
+  joyEl.addEventListener('touchend', () => { joy.active = false; joy.dx = joy.dy = 0; knob.style.transform = 'translate(-50%,-50%)'; });
+
+  // control de mirada (drag / touch / gyro-less)
+  let lon = 90, lat = 0, isDown = false, sx = 0, sy = 0, slon = 0, slat = 0;
+  const onDown = (x, y) => { isDown = true; sx = x; sy = y; slon = lon; slat = lat; container.classList.add('dragging'); };
+  const onMove = (x, y) => {
+    if (!isDown) return;
+    lon = slon + (sx - x) * 0.18;
+    lat = Math.max(-80, Math.min(80, slat + (y - sy) * 0.18));
+  };
+  const onUp = () => { isDown = false; container.classList.remove('dragging'); };
+  container.addEventListener('mousedown', (e) => onDown(e.clientX, e.clientY));
+  addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY));
+  addEventListener('mouseup', onUp);
+  container.addEventListener('touchstart', (e) => { if (!joy.active) onDown(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+  container.addEventListener('touchmove', (e) => onMove(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  container.addEventListener('touchend', onUp);
+
+  // carga de shows con crossfade
+  let currentTex = null, currentShow = null, showSeq = 0, panoVideo = null;
+  function applyTexture(t) {
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.wrapS = THREE.RepeatWrapping;
+    t.minFilter = THREE.LinearFilter;
+    t.generateMipmaps = false;
+    const old = currentTex;
+    currentTex = t;
+    shader.uniforms.tex.value = t;
+    fadeIn = 0;
+    if (old && old !== t) old.dispose();
+    document.getElementById('loader').classList.add('hide');
+  }
+  function stopPanoVideo() {
+    if (panoVideo) { panoVideo.pause(); panoVideo.removeAttribute('src'); panoVideo.load(); panoVideo = null; }
+  }
+  function loadShow(show, btn) {
+    document.querySelectorAll('#shows .pd-mini').forEach((b) => b.classList.remove('pd-mini--activa'));
+    // en celular la fila se desliza: la escena elegida siempre queda a la vista
+    if (btn) { btn.classList.add('pd-mini--activa'); btn.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); }
+    currentShow = show;
+    const seq = ++showSeq;
+    stopPanoVideo();
+    loader.load(show.file, (t) => { if (seq === showSeq) applyTexture(t); });
+    // si hay versión animada 360, se intenta encima de la foto (fallback silencioso si no existe)
+    if (show.video) {
+      const v = document.createElement('video');
+      v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true;
+      // iOS revisa los ATRIBUTOS, no solo las propiedades
+      v.setAttribute('muted', '');
+      v.setAttribute('playsinline', '');
+      v.setAttribute('webkit-playsinline', '');
+      v.crossOrigin = 'anonymous';
+      v.preload = 'auto';
+      v.src = show.video;
+      const tryPlay = () => {
+        if (seq !== showSeq) { v.pause(); return; }
+        v.play().then(() => {
+          if (seq !== showSeq) { v.pause(); return; }
+          panoVideo = v;
+          applyTexture(new THREE.VideoTexture(v));
+        }).catch(() => {});
+      };
+      v.addEventListener('loadeddata', tryPlay, { once: true });
+      // si el autoplay fue bloqueado, se reintenta con el primer gesto del usuario
+      const gestureRetry = () => { if (!panoVideo && seq === showSeq && v.readyState >= 2) tryPlay(); };
+      addEventListener('touchend', gestureRetry, { once: true, passive: true });
+      addEventListener('click', gestureRetry, { once: true });
+      v.load();
+    }
+    updateInteractiveUI();
+    // estilo sensor Kinect: el show interactivo pide la cámara solo
+    if (show.interactive && !ix.on) startInteractive();
+  }
+
+  // selector de escena: cada opción se ve con su propia panorámica de miniatura
+  const showsEl = document.getElementById('shows');
+  SHOWS.forEach((show, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pd-mini' + (i === 0 ? ' pd-mini--activa' : '');
+    b.innerHTML =
+      '<span class="pd-mini-img"><img src="' + show.file + '" alt="" loading="lazy" /></span>' +
+      '<span class="pd-mini-txt"><b>' + show.label + '</b></span>';
+    b.addEventListener('click', () => loadShow(show, b));
+    showsEl.appendChild(b);
+  });
+  // en VR la pantalla está a centímetros del ojo: se carga la versión 4K del show
+  renderer.xr.addEventListener('sessionstart', () => {
+    if (currentShow && currentShow.hi && !panoVideo) {
+      const seq = showSeq;
+      loader.load(currentShow.hi, (t) => { if (seq === showSeq && !panoVideo) applyTexture(t); });
+    }
+  });
+
+  // ---- capa interactiva: la cámara ve tus MANOS y la escena reacciona ----
+  // modo 'hands': MediaPipe HandLandmarker (hasta 2 manos, con gesto de pellizco)
+  // modo 'motion': fallback por diferencia de cuadros si MediaPipe no carga
+  const ix = { on: false, mode: null, video: null, canvas: null, ctx: null, prev: null, frame: 0 };
+  const MW = 64, MH = 36;
+  let landmarker = null;
+  // cada mano: posición en pantalla espejada (0..1), energía, pellizco, último visto
+  const hands = [
+    { x: 0.5, y: 0.5, e: 0, t: -1e9, pinch: false, px: 0.5, py: 0.5 },
+    { x: 0.5, y: 0.5, e: 0, t: -1e9, pinch: false, px: 0.5, py: 0.5 },
+  ];
+
+  const HAND_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;vertical-align:-3px;margin-right:7px;"><path d="M18 11V6a2 2 0 0 0-4 0v5"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>';
+  const ixBtn = document.createElement('button');
+  ixBtn.className = 'pd-btn';
+  ixBtn.type = 'button';
+  ixBtn.innerHTML = HAND_SVG + 'Modo interactivo';
+  document.getElementById('acciones').appendChild(ixBtn);
+  // el grupo entero (etiqueta y separador) aparece solo cuando la escena lo permite
+  const grupoIx = document.getElementById('grupo-ix');
+  const sepIx = document.getElementById('sep-ix');
+  const ixHint = document.createElement('div');
+  ixHint.className = 'chip';
+  ixHint.style.cssText = 'position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:22;display:none;';
+  ixHint.textContent = 'Mueve las manos frente a la cámara';
+  document.body.appendChild(ixHint);
+
+  function updateInteractiveUI() {
+    const can = !!(currentShow && currentShow.interactive);
+    grupoIx.hidden = sepIx.hidden = !(can && !ix.on);
+    ixHint.style.display = can && ix.on ? '' : 'none';
+    if (typeof pip !== 'undefined') pip.style.display = can && ix.on ? 'block' : 'none';
+    // el pez y las burbujas SIEMPRE viven en el show interactivo;
+    // la cámara solo agrega el control con las manos
+    // cada escena interactiva tiene su propia capa 3D viva al fondo
+    const esAcuario = can && currentShow.id === 'acuario';
+    const esFaroles = can && currentShow.id === 'quince';
+    const esGalaxia = can && currentShow.id === 'galaxia';
+    if (fishGroup) fishGroup.visible = esAcuario;
+    if (bubbles) bubbles.visible = esAcuario;
+    if (typeof school !== 'undefined') school.forEach((f) => (f.m.visible = esAcuario));
+    if (typeof ambient3d !== 'undefined') ambient3d.forEach((o) => (o.g.visible = esAcuario));
+    if (farolesGrupo) farolesGrupo.visible = esFaroles;
+    if (galaxiaGrupo) galaxiaGrupo.visible = esGalaxia;
+    if (esAcuario) cargarAcuario3d();
+    if (esFaroles) cargarFaroles();
+    if (esGalaxia) cargarGalaxia();
+  }
+
+  // vista previa con esqueleto de manos (feedback en vivo para el visitante)
+  const pip = document.createElement('canvas');
+  pip.width = 176; pip.height = 99;
+  pip.style.cssText = 'position:fixed;right:18px;bottom:76px;width:176px;height:99px;z-index:26;border-radius:10px;border:1px solid rgba(77,238,234,0.45);display:none;transform:none;background:#000;opacity:1;transition:opacity 0.5s;';
+  document.body.appendChild(pip);
+  const pipCtx = pip.getContext('2d');
+  // test de calibración: la cámara se muestra hasta confirmar que ve tus manos,
+  // luego se oculta y se avisa que la escena ya responde
+  const handTest = { ok: false, seen: 0, lastSeen: 0, hideTimer: null };
+  function handTestPass() {
+    handTest.ok = true;
+    ixHint.textContent = 'Manos detectadas — la escena es tuya';
+    ixHint.style.borderColor = 'rgba(77,238,234,0.7)';
+    ixHint.style.color = '#4deeea';
+    pip.style.opacity = '0';
+    clearTimeout(handTest.hideTimer);
+    handTest.hideTimer = setTimeout(() => {
+      pip.style.display = 'none';
+      ixHint.style.display = 'none';
+      ixHint.style.borderColor = '';
+      ixHint.style.color = '';
+    }, 2600);
+  }
+  function handTestReset(msg) {
+    handTest.ok = false;
+    handTest.seen = 0;
+    clearTimeout(handTest.hideTimer);
+    pip.style.display = 'block';
+    pip.style.opacity = '1';
+    ixHint.style.display = '';
+    ixHint.style.borderColor = '';
+    ixHint.style.color = '';
+    ixHint.textContent = msg;
+  }
+
+  // consigue la cámara probando de lo ideal a lo mínimo (estilo sensor Kinect:
+  // el show pide la cámara solo, sin esperar clic)
+  async function getCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new DOMException('Este navegador no expone la cámara (¿la página abrió fuera de https?)', 'NotSupportedError');
+    }
+    const attempts = [
+      { video: { width: { ideal: 640 }, height: { ideal: 360 }, facingMode: 'user' } },
+      { video: true },
+    ];
+    let lastErr;
+    for (const c of attempts) {
+      try { return await navigator.mediaDevices.getUserMedia(c); } catch (e) { lastErr = e; }
+    }
+    throw lastErr;
+  }
+  function cameraErrorText(e) {
+    if (e.name === 'NotAllowedError') return 'Permiso de cámara bloqueado — habilítalo en el candado de la barra del navegador y pulsa el botón';
+    if (e.name === 'NotFoundError') return 'No se encontró ninguna cámara conectada';
+    if (e.name === 'NotReadableError') return 'Otra aplicación está usando la cámara — ciérrala y pulsa el botón';
+    return 'La cámara no respondió (' + e.name + ') — pulsa el botón para reintentar';
+  }
+
+  let ixStarting = false;
+  async function startInteractive() {
+    if (ix.on || ixStarting) return;
+    ixStarting = true;
+    ixHint.style.display = '';
+    ixHint.textContent = 'Activando la cámara…';
+    try {
+      const stream = await getCamera();
+      ix.video = document.createElement('video');
+      ix.video.srcObject = stream;
+      ix.video.muted = true; ix.video.playsInline = true;
+      await ix.video.play();
+      // seguimiento de manos real; si falla, detector de movimiento simple
+      try {
+        const mp = await import('./assets/mediapipe/vision_bundle.mjs');
+        const files = await mp.FilesetResolver.forVisionTasks('assets/mediapipe/wasm');
+        landmarker = await mp.HandLandmarker.createFromOptions(files, {
+          baseOptions: { modelAssetPath: 'assets/mediapipe/hand_landmarker.task', delegate: 'GPU' },
+          runningMode: 'VIDEO',
+          numHands: 2,
+        });
+        ix.mode = 'hands';
+      } catch (err) {
+        console.warn('MediaPipe no disponible, usando detector de movimiento', err);
+        ix.canvas = document.createElement('canvas');
+        ix.canvas.width = MW; ix.canvas.height = MH;
+        ix.ctx = ix.canvas.getContext('2d', { willReadFrequently: true });
+        ix.mode = 'motion';
+      }
+      ix.on = true;
+      updateInteractiveUI();
+      if (ix.mode === 'hands') handTestReset('Muestra tus manos a la cámara para calibrar');
+      else { pip.style.display = 'block'; ixHint.textContent = 'Mueve las manos frente a la cámara'; }
+    } catch (e) {
+      console.error('camara:', e);
+      ixHint.textContent = cameraErrorText(e);
+      ixBtn.innerHTML = HAND_SVG + 'Reintentar cámara';
+      ixBtn.style.display = '';
+    } finally {
+      ixStarting = false;
+    }
+  }
+  ixBtn.addEventListener('click', startInteractive);
+
+  function sampleHands(t) {
+    const res = landmarker.detectForVideo(ix.video, t);
+    const found = res.landmarks || [];
+    if (found.length) { handTest.seen++; handTest.lastSeen = performance.now(); }
+    // vista previa espejada
+    pipCtx.save();
+    pipCtx.scale(-1, 1);
+    pipCtx.drawImage(ix.video, -pip.width, 0, pip.width, pip.height);
+    pipCtx.restore();
+    for (let h = 0; h < hands.length; h++) {
+      const lm = found[h];
+      if (!lm) continue;
+      const palm = lm[9]; // nudillo medio: centro estable de la mano
+      const H = hands[h];
+      H.px = H.x; H.py = H.y;
+      H.x = 1 - palm.x; // espejo: tu derecha es la derecha de la escena
+      H.y = palm.y;
+      const dx = H.x - H.px, dy = H.y - H.py;
+      H.e = Math.min(1, Math.sqrt(dx * dx + dy * dy) * 30);
+      const pinchD = Math.hypot(lm[4].x - lm[8].x, lm[4].y - lm[8].y);
+      H.pinch = pinchD < 0.07;
+      H.t = performance.now();
+      // esqueleto en la vista previa
+      pipCtx.fillStyle = H.pinch ? '#d94de8' : '#4deeea';
+      for (const p of lm) {
+        pipCtx.beginPath();
+        pipCtx.arc((1 - p.x) * pip.width, p.y * pip.height, 1.6, 0, Math.PI * 2);
+        pipCtx.fill();
+      }
+    }
+  }
+
+  function sampleMotion() {
+    ix.ctx.drawImage(ix.video, 0, 0, MW, MH);
+    const d = ix.ctx.getImageData(0, 0, MW, MH).data;
+    if (!ix.prev) { ix.prev = new Uint8ClampedArray(d); return; }
+    let n = 0, sx = 0, sy = 0;
+    for (let i = 0; i < MW * MH; i++) {
+      const j = i * 4;
+      const diff = Math.abs(d[j] - ix.prev[j]) + Math.abs(d[j + 1] - ix.prev[j + 1]) + Math.abs(d[j + 2] - ix.prev[j + 2]);
+      if (diff > 80) { n++; sx += i % MW; sy += (i / MW) | 0; }
+    }
+    ix.prev.set(d);
+    pipCtx.save();
+    pipCtx.scale(-1, 1);
+    pipCtx.drawImage(ix.video, -pip.width, 0, pip.width, pip.height);
+    pipCtx.restore();
+    if (n > 10) {
+      const H = hands[0];
+      H.x = 1 - sx / n / MW; // espejo: tu mano derecha mueve la derecha de la escena
+      H.y = sy / n / MH;
+      H.e = Math.min(1, n / 260);
+      H.t = performance.now();
+    }
+  }
+
+  // burbujas (sprite radial generado en canvas)
+  const bubbleTexCanvas = document.createElement('canvas');
+  bubbleTexCanvas.width = bubbleTexCanvas.height = 64;
+  const bctx = bubbleTexCanvas.getContext('2d');
+  const grad = bctx.createRadialGradient(26, 24, 4, 32, 32, 30);
+  grad.addColorStop(0, 'rgba(255,255,255,0.95)');
+  grad.addColorStop(0.35, 'rgba(200,240,255,0.35)');
+  grad.addColorStop(0.8, 'rgba(160,220,255,0.12)');
+  grad.addColorStop(1, 'rgba(160,220,255,0)');
+  bctx.fillStyle = grad;
+  bctx.beginPath(); bctx.arc(32, 32, 30, 0, Math.PI * 2); bctx.fill();
+  const NB = 140;
+  const bGeo = new THREE.BufferGeometry();
+  const bPos = new Float32Array(NB * 3);
+  const bVel = [];
+  // las burbujas también viven al fondo, dentro de la imagen 360
+  function burbujaEnPared(i) {
+    const ang = rand() * 6.28;
+    const r = 28 + rand() * 4;
+    bPos[i * 3] = Math.cos(ang) * r;
+    bPos[i * 3 + 2] = Math.sin(ang) * r;
+  }
+  for (let i = 0; i < NB; i++) {
+    burbujaEnPared(i);
+    bPos[i * 3 + 1] = (rand() - 0.5) * 30;
+    bVel.push(new THREE.Vector3(0, 0.012 + rand() * 0.02, 0));
+  }
+  bGeo.setAttribute('position', new THREE.BufferAttribute(bPos, 3));
+  const bubbles = new THREE.Points(bGeo, new THREE.PointsMaterial({
+    map: new THREE.CanvasTexture(bubbleTexCanvas), size: 1.2, transparent: true,
+    opacity: 0.85, depthWrite: false, sizeAttenuation: true,
+  }));
+  bubbles.visible = false;
+  scene.add(bubbles);
+
+  // ---- acuario 3D (Sketchfab, todo CC-BY): megalodón de Pablo Medrano, tortuga de
+  // kenchoo, cardumen de LasquetiSpice y arrecife de libblekibble ----
+  // cargan una sola vez, al entrar por primera vez a la escena Acuario
+  let fishGroup = null, fishVel = new THREE.Vector3();
+  const fishTarget = new THREE.Vector3(6, 0, 0);
+  const mixers = [];
+  const ambient3d = [];
+  const gltfLoader = new GLTFLoader();
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/libs/draco/');
+  gltfLoader.setDRACOLoader(dracoLoader);
+  let acuarioCargado = false;
+  // centra el modelo en su origen y lo escala a un largo dado (en metros del cubo)
+  function normalizar3d(objeto, largo) {
+    const caja = new THREE.Box3().setFromObject(objeto);
+    const dim = caja.getSize(new THREE.Vector3());
+    const esc = largo / Math.max(dim.x, dim.y, dim.z);
+    objeto.scale.setScalar(esc);
+    objeto.position.sub(caja.getCenter(new THREE.Vector3()).multiplyScalar(esc));
+    return dim.multiplyScalar(esc);
+  }
+  function activarAnim(gltf, raiz) {
+    if (gltf.animations && gltf.animations.length) {
+      const mx = new THREE.AnimationMixer(raiz);
+      mx.clipAction(gltf.animations[0]).play();
+      mixers.push(mx);
+    }
+  }
+  function cargarAcuario3d() {
+    if (acuarioCargado) return;
+    acuarioCargado = true;
+    // luz solo para los modelos (los materiales del pano son basic y la ignoran)
+    const luzA = new THREE.AmbientLight(0x9fc8e0, 1.55);
+    const luzD = new THREE.DirectionalLight(0xd8f0ff, 1.7);
+    luzD.position.set(3, 10, 2);
+    scene.add(luzA, luzD);
+    // megalodón: el protagonista, responde a las manos igual que la manta anterior
+    gltfLoader.load('modelos/megalodon.glb', (g) => {
+      fishGroup = new THREE.Group();
+      normalizar3d(g.scene, 13); // grande: vive a 30 m, el tamaño aparente es el de antes
+      fishGroup.add(g.scene);
+      fishGroup.position.set(0, 2, -30);
+      fishGroup.visible = !!(currentShow && currentShow.interactive);
+      scene.add(fishGroup);
+      activarAnim(g, g.scene);
+      updateInteractiveUI();
+    });
+    // tortuga: ronda lenta a media altura
+    gltfLoader.load('modelos/tortuga.glb', (g) => {
+      const grupo = new THREE.Group();
+      normalizar3d(g.scene, 4); // a 30 m se ve del tamaño de una tortuga cercana
+      grupo.add(g.scene);
+      grupo.visible = !!(currentShow && currentShow.interactive);
+      scene.add(grupo);
+      activarAnim(g, g.scene);
+      ambient3d.push({ g: grupo, tipo: 'tortuga' });
+      updateInteractiveUI();
+    });
+  }
+
+  // ---- Noche de Faroles: linternas 3D al fondo; tu mano las aviva y las aparta ----
+  let farolesGrupo = null;
+  const faroles = [];
+  function cargarFaroles() {
+    if (farolesGrupo) return;
+    farolesGrupo = new THREE.Group();
+    scene.add(farolesGrupo);
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const cxF = c.getContext('2d');
+    const gF = cxF.createRadialGradient(32, 32, 2, 32, 32, 30);
+    gF.addColorStop(0, 'rgba(255,224,160,1)');
+    gF.addColorStop(0.4, 'rgba(255,175,85,0.5)');
+    gF.addColorStop(1, 'rgba(255,150,50,0)');
+    cxF.fillStyle = gF; cxF.beginPath(); cxF.arc(32, 32, 30, 0, Math.PI * 2); cxF.fill();
+    const texFarol = new THREE.CanvasTexture(c);
+    const geoFarol = new THREE.CylinderGeometry(0.5, 0.34, 1.25, 10, 1, true);
+    for (let i = 0; i < 24; i++) {
+      const f = new THREE.Group();
+      const cuerpo = new THREE.Mesh(geoFarol, new THREE.MeshBasicMaterial({ color: 0xffb45e, transparent: true, opacity: 0.92, side: THREE.DoubleSide }));
+      const brillo = new THREE.Sprite(new THREE.SpriteMaterial({ map: texFarol, transparent: true, depthWrite: false, opacity: 0.75 }));
+      brillo.scale.setScalar(3.2);
+      f.add(cuerpo, brillo);
+      const ang = rand() * 6.28, r = 28.5 + rand() * 3;
+      f.position.set(Math.cos(ang) * r, -14 + rand() * 26, Math.sin(ang) * r);
+      f.scale.setScalar(1.6 + rand() * 1.6); // a 30 m: tamaño de farol real
+      farolesGrupo.add(f);
+      faroles.push({ f, brillo, sube: 0.006 + rand() * 0.01, fase: rand() * 6.28, calor: 0 });
+    }
+    updateInteractiveUI();
+  }
+
+  // ---- Galaxia: polvo estelar que respira + estrellas fugaces con el pellizco ----
+  let galaxiaGrupo = null, polvo = null;
+  const fugaces = [];
+  let ultimaFugaz = 0;
+  function cargarGalaxia() {
+    if (galaxiaGrupo) return;
+    galaxiaGrupo = new THREE.Group();
+    scene.add(galaxiaGrupo);
+    const NP = 240;
+    const pgG = new THREE.BufferGeometry();
+    const ppG = new Float32Array(NP * 3);
+    for (let i = 0; i < NP; i++) {
+      const ang = rand() * 6.28, r = 28 + rand() * 4;
+      ppG[i * 3] = Math.cos(ang) * r;
+      ppG[i * 3 + 1] = (rand() - 0.5) * 26;
+      ppG[i * 3 + 2] = Math.sin(ang) * r;
+    }
+    pgG.setAttribute('position', new THREE.BufferAttribute(ppG, 3));
+    polvo = new THREE.Points(pgG, new THREE.PointsMaterial({ map: auraTex, color: 0xbfd8ff, size: 0.7, transparent: true, opacity: 0.85, depthWrite: false }));
+    galaxiaGrupo.add(polvo);
+    updateInteractiveUI();
+  }
+  function lanzarFugaz(origen) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: auraTex, color: 0xffffff, transparent: true, depthWrite: false }));
+    s.scale.setScalar(2.4);
+    s.position.copy(origen);
+    // vuela tangente al fondo (perpendicular a la dirección radial), con leve caída
+    const radial = origen.clone().setY(0).normalize();
+    const vel = new THREE.Vector3(-radial.z, -0.12, radial.x).multiplyScalar(0.5 + Math.random() * 0.25);
+    galaxiaGrupo.add(s);
+    fugaces.push({ s, vel, vida: 1 });
+  }
+
+  // auras: un punto de luz por mano, para que el visitante VEA que el sistema lo sigue
+  const auraCanvas = document.createElement('canvas');
+  auraCanvas.width = auraCanvas.height = 64;
+  const actx = auraCanvas.getContext('2d');
+  const agrad = actx.createRadialGradient(32, 32, 2, 32, 32, 30);
+  agrad.addColorStop(0, 'rgba(255,255,255,1)');
+  agrad.addColorStop(0.3, 'rgba(77,238,234,0.55)');
+  agrad.addColorStop(1, 'rgba(77,238,234,0)');
+  actx.fillStyle = agrad;
+  actx.beginPath(); actx.arc(32, 32, 30, 0, Math.PI * 2); actx.fill();
+  const auraTex = new THREE.CanvasTexture(auraCanvas);
+  const auras = hands.map(() => {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: auraTex, transparent: true, depthWrite: false, color: 0xffffff }));
+    s.scale.setScalar(0.9);
+    s.visible = false;
+    scene.add(s);
+    return s;
+  });
+
+  // cardumen: peces pequeños que nadan en grupo, huyen de tus manos
+  const SCHOOL_N = 14;
+  const school = [];
+  loader.load('assets/pez-chico.png', (t) => {
+    t.colorSpace = THREE.SRGBColorSpace;
+    for (let i = 0; i < SCHOOL_N; i++) {
+      const m = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.1, 0.62),
+        new THREE.MeshBasicMaterial({ map: t, transparent: true, side: THREE.DoubleSide, depthWrite: false })
+      );
+      // nacen al fondo, dentro de la imagen 360
+      const ang = rand() * 6.28;
+      m.position.set(Math.cos(ang) * (29.5 + rand() * 2), (rand() - 0.5) * 12 + 2, Math.sin(ang) * (29.5 + rand() * 2));
+      m.scale.setScalar(2.4); // a 30 m conservan su tamaño aparente
+      m.visible = !!(currentShow && currentShow.interactive);
+      scene.add(m);
+      school.push({ m, vel: new THREE.Vector3((rand() - 0.5) * 0.02, 0, (rand() - 0.5) * 0.02), phase: rand() * 6.28 });
+    }
+    updateInteractiveUI();
+  });
+
+  const rayDir = new THREE.Vector3();
+  const camPos = new THREE.Vector3(), bp = new THREE.Vector3(), toB = new THREE.Vector3();
+  const closest = new THREE.Vector3(), away = new THREE.Vector3(), steer = new THREE.Vector3();
+  const mira = new THREE.Vector3(), qViejo = new THREE.Quaternion();
+  // proyección a la IMAGEN 360 (esfera r=34): la fauna vive AL FONDO, fundida con el
+  // panorama — a la misma profundidad que la imagen no hay parallax que la delate.
+  // El volumen del cubo (paredes a ±13) queda totalmente vacío, como un cubo real.
+  function alFondo(v, r) {
+    const m = Math.hypot(v.x, v.z) || 1;
+    const k = r / m;
+    v.x *= k; v.z *= k;
+    return v;
+  }
+  function handRay(H, out) {
+    return out.set(H.x * 2 - 1, -(H.y * 2 - 1), 0.5).unproject(camera).sub(camPos).normalize();
+  }
+  function interactiveTick(t) {
+    if (!currentShow || !currentShow.interactive) return;
+    ix.frame++;
+    if (ix.on && ix.video && ix.video.readyState >= 2) {
+      if (ix.mode === 'hands') {
+        if (ix.frame % 2 === 0) sampleHands(t);
+        // test de calibración: al confirmar las manos se oculta la cámara y se avisa
+        if (!handTest.ok && handTest.seen > 20) handTestPass();
+        else if (handTest.ok && performance.now() - handTest.lastSeen > 15000) handTestReset('¿Sigues ahí? Muestra tus manos a la cámara');
+      } else if (ix.frame % 3 === 0) {
+        sampleMotion();
+      }
+    }
+    camera.getWorldPosition(camPos);
+    const now = performance.now();
+
+    // burbujas: suben; se apartan de cada mano activa
+    const arr = bGeo.attributes.position.array;
+    for (let i = 0; i < NB; i++) {
+      bp.set(arr[i * 3], arr[i * 3 + 1], arr[i * 3 + 2]);
+      for (const H of hands) {
+        if (now - H.t > 1200) continue;
+        handRay(H, rayDir);
+        toB.copy(bp).sub(camPos);
+        const along = toB.dot(rayDir);
+        if (along > 0.5 && along < 16) {
+          closest.copy(camPos).addScaledVector(rayDir, along);
+          away.copy(bp).sub(closest);
+          const dist = away.length();
+          if (dist < 3.2) {
+            away.normalize();
+            bVel[i].addScaledVector(away, (1 - dist / 3.2) * 0.09 * (0.4 + H.e));
+          }
+        }
+      }
+      bVel[i].x *= 0.96; bVel[i].z *= 0.96;
+      bVel[i].y = Math.max(0.012, bVel[i].y * 0.985);
+      arr[i * 3] += bVel[i].x; arr[i * 3 + 1] += bVel[i].y; arr[i * 3 + 2] += bVel[i].z;
+      if (arr[i * 3 + 1] > 15) { arr[i * 3 + 1] = -15; burbujaEnPared(i); }
+      // devolverlas al fondo si algo (manos, estela) las empujó hacia el centro
+      const mBu = Math.hypot(arr[i * 3], arr[i * 3 + 2]) || 1;
+      if (mBu < 28) { const kBu = 28 / mBu; arr[i * 3] *= kBu; arr[i * 3 + 2] *= kBu; }
+      else if (mBu > 32) { const kBu = 32 / mBu; arr[i * 3] *= kBu; arr[i * 3 + 2] *= kBu; }
+    }
+    bGeo.attributes.position.needsUpdate = true;
+
+    // auras siguiendo cada mano (pellizco = magenta y más grande)
+    hands.forEach((H, i) => {
+      const a = auras[i];
+      const fresh = now - H.t < 400;
+      a.visible = ix.on && fresh;
+      if (fresh) {
+        handRay(H, rayDir);
+        // el aura se pinta AL FONDO, dentro de la imagen: puntero de mapping
+        a.position.copy(camPos).addScaledVector(rayDir, 29);
+        a.material.color.setHex(H.pinch ? 0xd94de8 : 0xffffff);
+        const pulse = (0.8 + Math.sin(t / 180) * 0.12 + H.e * 0.6) * 5; // lejos: escala compensada
+        a.scale.setScalar(H.pinch ? pulse * 1.6 : pulse);
+      }
+    });
+
+    // tiburón: prioridad al pellizco; luego a la mano que más se mueve; si nada, patrulla
+    if (fishGroup && fishGroup.visible) {
+      const pinching = hands.find((H) => H.pinch && now - H.t < 700);
+      const moving = hands.filter((H) => now - H.t < 1600).sort((a, b) => b.e - a.e)[0];
+      if (pinching) {
+        handRay(pinching, rayDir);
+        fishTarget.copy(camPos).addScaledVector(rayDir, 20); // nada hasta la pared que señalas
+      } else if (moving && moving.e > 0.04) {
+        handRay(moving, rayDir);
+        fishTarget.copy(camPos).addScaledVector(rayDir, 20);
+      } else {
+        const a = t / 9000;
+        fishTarget.set(Math.cos(a) * 30, 2 + Math.sin(t / 4000) * 5, Math.sin(a) * 30);
+      }
+      // el objetivo siempre cae AL FONDO, sobre la imagen 360
+      alFondo(fishTarget, 30);
+      fishTarget.y = Math.max(-8, Math.min(14, fishTarget.y));
+      steer.copy(fishTarget).sub(fishGroup.position);
+      fishVel.addScaledVector(steer, pinching ? 0.0022 : 0.0012);
+      fishVel.multiplyScalar(0.965);
+      fishGroup.position.add(fishVel);
+      // el cuerpo permanece fundido con el panorama: banda 29–31
+      const mT = Math.hypot(fishGroup.position.x, fishGroup.position.z);
+      if (mT < 29) alFondo(fishGroup.position, 29);
+      else if (mT > 31) alFondo(fishGroup.position, 31);
+      fishGroup.position.y = Math.max(-8, Math.min(14, fishGroup.position.y));
+      // el tiburón apunta hacia donde nada, con giro amortiguado (inercia de animal grande)
+      if (fishVel.lengthSq() > 1e-7) {
+        qViejo.copy(fishGroup.quaternion);
+        mira.copy(fishGroup.position).add(fishVel);
+        fishGroup.lookAt(mira);
+        fishGroup.quaternion.slerp(qViejo, 0.92);
+      }
+      fishGroup.position.y += Math.sin(t / 900) * 0.004; // vaivén suave al nadar
+
+      // estela: al nadar rápido va soltando burbujas reales del sistema
+      if (fishVel.lengthSq() > 0.003 && ix.frame % 4 === 0) {
+        const bi = Math.floor(rand() * NB);
+        arr[bi * 3] = fishGroup.position.x + (rand() - 0.5) * 0.4;
+        arr[bi * 3 + 1] = fishGroup.position.y - 0.4;
+        arr[bi * 3 + 2] = fishGroup.position.z + (rand() - 0.5) * 0.4;
+        bVel[bi].set((rand() - 0.5) * 0.02, 0.03 + rand() * 0.02, (rand() - 0.5) * 0.02);
+      }
+    }
+
+    // faroles: suben serenos; tu mano los aviva (brillan) y el viento de tu gesto los aparta
+    if (farolesGrupo && farolesGrupo.visible) {
+      for (const o of faroles) {
+        o.f.position.y += o.sube;
+        o.f.position.x += Math.sin(t / 3100 + o.fase) * 0.004;
+        o.f.position.z += Math.cos(t / 3600 + o.fase) * 0.004;
+        o.calor *= 0.94;
+        for (const H of hands) {
+          if (now - H.t > 1200) continue;
+          handRay(H, rayDir);
+          toB.copy(o.f.position).sub(camPos);
+          const along = toB.dot(rayDir);
+          if (along > 4 && along < 45) {
+            closest.copy(camPos).addScaledVector(rayDir, along);
+            away.copy(o.f.position).sub(closest);
+            const d = away.length();
+            if (d < 8) {
+              o.calor = Math.min(1, o.calor + (1 - d / 8) * (H.pinch ? 0.5 : 0.18));
+              o.f.position.addScaledVector(away.normalize(), (1 - d / 8) * 0.05);
+            }
+          }
+        }
+        o.brillo.scale.setScalar(3.2 + o.calor * 3.5);
+        o.brillo.material.opacity = 0.75 + o.calor * 0.25;
+        if (o.f.position.y > 15) {
+          const angR = rand() * 6.28, rR = 28.5 + rand() * 3;
+          o.f.position.set(Math.cos(angR) * rR, -14, Math.sin(angR) * rR);
+        }
+        const mL = Math.hypot(o.f.position.x, o.f.position.z) || 1;
+        if (mL < 28) alFondo(o.f.position, 28);
+        else if (mL > 32) alFondo(o.f.position, 32);
+      }
+    }
+
+    // galaxia: el polvo estelar respira en órbita; el pellizco lanza una estrella fugaz
+    if (galaxiaGrupo && galaxiaGrupo.visible) {
+      if (polvo) polvo.rotation.y += 0.00014;
+      const pinchG = hands.find((H) => H.pinch && now - H.t < 500);
+      if (pinchG && now - ultimaFugaz > 650) {
+        ultimaFugaz = now;
+        handRay(pinchG, rayDir);
+        mira.copy(camPos).addScaledVector(rayDir, 30);
+        alFondo(mira, 30);
+        lanzarFugaz(mira);
+      }
+      for (let i = fugaces.length - 1; i >= 0; i--) {
+        const fz = fugaces[i];
+        fz.s.position.add(fz.vel);
+        alFondo(fz.s.position, 30);
+        fz.vida -= 0.012;
+        fz.s.material.opacity = Math.max(0, fz.vida);
+        fz.s.scale.setScalar(2.4 * (0.5 + fz.vida * 0.5));
+        if (fz.vida <= 0) { galaxiaGrupo.remove(fz.s); fugaces.splice(i, 1); }
+      }
+    }
+
+    // fauna 3D ambiente: la tortuga hace una ronda lenta, el cardumen deriva girando
+    for (const o of ambient3d) {
+      if (!o.g.visible) continue;
+      // la ronda de la tortuga va al fondo, fundida con la imagen 360
+      const a = t / 26000;
+      o.g.position.set(Math.cos(a) * 30, 3 + Math.sin(t / 5200) * 2, Math.sin(a) * 30);
+      o.g.rotation.y = -a; // tangente a la ronda
+    }
+
+    // cardumen: cohesión suave, deriva ondulante y huida de las manos
+    if (school.length && school[0].m.visible) {
+      const center = new THREE.Vector3();
+      school.forEach((f) => center.add(f.m.position));
+      center.divideScalar(school.length);
+      const rightW = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.getWorldQuaternion(new THREE.Quaternion()));
+      for (const f of school) {
+        // sin cohesión al centroide (jalaba a los peces hacia el centro del cubo):
+        // deriva ondulante a lo largo de la pared
+        f.vel.x += Math.sin(t / 1400 + f.phase) * 0.0007;
+        f.vel.y += (2 + Math.sin(t / 1900 + f.phase * 2) * 5 - f.m.position.y) * 0.0006;
+        f.vel.z += Math.cos(t / 1600 + f.phase) * 0.0007;
+        for (const H of hands) {
+          if (performance.now() - H.t > 1200) continue;
+          handRay(H, rayDir);
+          toB.copy(f.m.position).sub(camPos);
+          const along = toB.dot(rayDir);
+          if (along > 0.5 && along < 45) {
+            closest.copy(camPos).addScaledVector(rayDir, along);
+            away.copy(f.m.position).sub(closest);
+            const d = away.length();
+            if (d < 9) f.vel.addScaledVector(away.normalize(), (1 - d / 9) * 0.09 * (0.5 + H.e));
+          }
+        }
+        f.vel.multiplyScalar(0.97);
+        f.m.position.add(f.vel);
+        f.m.position.y = Math.max(-8, Math.min(14, f.m.position.y));
+        // candado de fondo: el pez vive fundido con la imagen (banda 29–31.5)
+        const mF = Math.hypot(f.m.position.x, f.m.position.z);
+        if (mF < 29) alFondo(f.m.position, 29);
+        else if (mF > 31.5) alFondo(f.m.position, 31.5);
+        f.m.lookAt(camPos);
+        f.m.scale.x = f.vel.dot(rightW) < 0 ? -1 : 1;
+        // misma agua que la manta: niebla por distancia
+        const dC = f.m.position.distanceTo(camPos);
+        const fg = THREE.MathUtils.clamp((dC - 4) / 12, 0, 1);
+        f.m.material.opacity = 1 - fg * 0.45;
+      }
+    }
+  }
+
+  // ---- tutorial de inicio (tour guiado con opción de saltar) ----
+  const SVG_ATTRS = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+  const TOUR = [
+    {
+      title: 'Estás dentro de la proyección',
+      text: 'Arrastra con el dedo o el mouse para mirar a tu alrededor — el show te envuelve en 360°.',
+      svg: `<svg ${SVG_ATTRS}><circle cx="12" cy="12" r="3.2"/><path d="M20.8 12c0 2.2-3.9 4-8.8 4s-8.8-1.8-8.8-4 3.9-4 8.8-4 8.8 1.8 8.8 4z"/><path d="M18.5 17.5l2-1.2-.4 2.3"/></svg>`,
+    },
+    {
+      title: 'Camina dentro del cubo',
+      text: 'Muévete con WASD o las flechas del teclado; en el celular usa el joystick de la esquina inferior.',
+      svg: `<svg ${SVG_ATTRS}><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><path d="M10 5l2-2 2 2M10 19l2 2 2-2M5 10l-2 2 2 2M19 10l2 2-2 2"/></svg>`,
+    },
+    {
+      title: 'Tus manos controlan la escena',
+      text: 'La cámara te sigue como un sensor y cada mundo responde: en Acuario el megalodón nada hasta donde señalas, en Noche de Faroles tus manos avivan las linternas y en Galaxia el pellizco lanza estrellas fugaces.',
+      svg: HAND_SVG.replace('style="width:17px;height:17px;vertical-align:-3px;margin-right:7px;"', ''),
+    },
+    {
+      title: 'Y si tienes gafas VR…',
+      text: 'Pulsa el botón VR de la esquina y el cubo se convierte en una experiencia de realidad virtual completa.',
+      svg: `<svg ${SVG_ATTRS}><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-3.2a2 2 0 0 1-1.6-.8l-1-1.4a1.5 1.5 0 0 0-2.4 0l-1 1.4a2 2 0 0 1-1.6.8H5a2 2 0 0 1-2-2z"/><circle cx="8" cy="11.5" r="1"/><circle cx="16" cy="11.5" r="1"/></svg>`,
+    },
+  ];
+  const tourEl = document.getElementById('tour');
+  const tourCard = tourEl.querySelector('.tour-card');
+  const tourDots = document.getElementById('tour-dots');
+  TOUR.forEach(() => tourDots.appendChild(document.createElement('i')));
+  let tourStep = 0;
+  function renderTour() {
+    document.getElementById('tour-icon').innerHTML = TOUR[tourStep].svg;
+    document.getElementById('tour-title').textContent = TOUR[tourStep].title;
+    document.getElementById('tour-text').textContent = TOUR[tourStep].text;
+    [...tourDots.children].forEach((d, i) => d.classList.toggle('on', i === tourStep));
+    document.getElementById('tour-next').textContent = tourStep === TOUR.length - 1 ? 'Empezar' : 'Siguiente';
+  }
+  function showTour() {
+    tourStep = 0;
+    renderTour();
+    tourEl.classList.remove('hidden');
+  }
+  function endTour() {
+    tourEl.classList.add('hidden');
+    try { localStorage.setItem('pd-cubo-tour', '1'); } catch (e) {}
+  }
+  document.getElementById('tour-next').addEventListener('click', () => {
+    if (tourStep >= TOUR.length - 1) return endTour();
+    tourCard.classList.add('swap');
+    setTimeout(() => {
+      tourStep++;
+      renderTour();
+      tourCard.classList.remove('swap');
+    }, 200);
+  });
+  document.getElementById('tour-skip').addEventListener('click', endTour);
+  document.getElementById('tour-reopen').addEventListener('click', showTour);
+  let seenTour = false;
+  try { seenTour = !!localStorage.getItem('pd-cubo-tour'); } catch (e) {}
+  if (!seenTour) setTimeout(showTour, 1400); // tras el fade del loader
+
+  loadShow(SHOWS[0], showsEl.children[0]);
+
+  let fadeIn = 0;
+  const SPEED = 0.09;
+  const LIMIT = 11.5; // radio caminable dentro del cubo de 26
+  // gancho e2e (mismo patrón que __ritmo / __kinect)
+  window.__cubo = { get fish() { return fishGroup; }, ambient3d, mixers, camera, rig, scene, get show() { return currentShow; } };
+
+  let ultimoT = 0;
+  renderer.setAnimationLoop((t) => {
+    // animaciones esqueléticas del acuario 3D (nado del tiburón, tortuga, cardumen)
+    const dtMx = Math.min(0.05, (t - (ultimoT || t)) / 1000);
+    ultimoT = t;
+    if (mixers.length && currentShow && currentShow.interactive) mixers.forEach((m) => m.update(dtMx));
+    fadeIn = Math.min(1, fadeIn + 0.03);
+    shader.uniforms.fade.value = fadeIn;
+    const inXR = renderer.xr.isPresenting;
+    if (mvr.on && mvr.hasGyro) camera.quaternion.copy(mvr.quat);
+    if (!inXR) {
+      const dir = new THREE.Vector3();
+      if (mvr.on) {
+        // giroscopio manda la mirada; el frente para caminar sale de la cámara
+        dir.set(0, 0, -1).applyQuaternion(camera.quaternion);
+        dir.y = 0;
+        if (dir.lengthSq() < 0.001) dir.set(0, 0, -1); else dir.normalize();
+      } else {
+        if (!isDown) lon += 0.015;
+        const phi = THREE.MathUtils.degToRad(90 - lat);
+        const theta = THREE.MathUtils.degToRad(lon);
+        dir.set(Math.sin(phi) * Math.cos(theta), 0, Math.sin(phi) * Math.sin(theta)).normalize();
+        camera.rotation.set(THREE.MathUtils.degToRad(lat), -theta - Math.PI / 2, 0, 'YXZ');
+      }
+      // avance: W/flecha arriba o joystick (también en vista 360 mono)
+      if (!mvr.stereo) {
+        const strafe = new THREE.Vector3(-dir.z, 0, dir.x);
+        let mx = 0, mz = 0;
+        if (keys['w'] || keys['arrowup']) mz += 1;
+        if (keys['s'] || keys['arrowdown']) mz -= 1;
+        if (keys['a'] || keys['arrowleft']) mx -= 1;
+        if (keys['d'] || keys['arrowright']) mx += 1;
+        mz += -joy.dy; mx += joy.dx;
+        rig.position.addScaledVector(dir, mz * SPEED);
+        rig.position.addScaledVector(strafe, mx * SPEED);
+        rig.position.x = Math.max(-LIMIT, Math.min(LIMIT, rig.position.x));
+        rig.position.z = Math.max(-LIMIT, Math.min(LIMIT, rig.position.z));
+      }
+    }
+    particles.rotation.y = t / 60000;
+    edges.material.opacity = 0.25 + 0.15 * Math.sin(t / 900);
+    interactiveTick(t);
+    if (mvr.on && mvr.stereo) {
+      // Cardboard: un render por ojo, mitad de pantalla cada uno
+      camera.updateMatrixWorld();
+      stereo.update(camera);
+      const w = innerWidth, h = innerHeight;
+      renderer.setScissorTest(true);
+      renderer.setScissor(0, 0, w / 2, h);
+      renderer.setViewport(0, 0, w / 2, h);
+      renderer.render(scene, stereo.cameraL);
+      renderer.setScissor(w / 2, 0, w / 2, h);
+      renderer.setViewport(w / 2, 0, w / 2, h);
+      renderer.render(scene, stereo.cameraR);
+      renderer.setScissorTest(false);
+    } else {
+      renderer.render(scene, camera);
+    }
+  });
+
+  addEventListener('resize', () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Persistencia Digital — Golazo VR</title>
+<link rel="icon" type="image/webp" href="assets/isotipo.webp" />
+<meta name="description" content="VR interactivo: ataja los balones en 360 con el mouse, el giroscopio, las gafas o tus propias manos frente a la cámara." />
+<!-- seo-preciso -->
+<link rel="canonical" href="https://persistenciadigital.com/juego.html" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Persistencia Digital" />
+<meta property="og:title" content="Persistencia Digital — Golazo VR" />
+<meta property="og:description" content="VR interactivo: ataja los balones en 360 con el mouse, el giroscopio, las gafas o tus propias manos frente a la cámara." />
+<meta property="og:url" content="https://persistenciadigital.com/juego.html" />
+<meta property="og:image" content="https://persistenciadigital.com/assets/og/juego.jpg" />
+<meta property="og:image:secure_url" content="https://persistenciadigital.com/assets/og/juego.jpg" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="1080" />
+<meta property="og:image:height" content="1080" />
+<meta property="og:locale" content="es_CO" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Persistencia Digital — Golazo VR" />
+<meta name="twitter:description" content="VR interactivo: ataja los balones en 360 con el mouse, el giroscopio, las gafas o tus propias manos frente a la cámara." />
+<meta name="twitter:image" content="https://persistenciadigital.com/assets/og/juego.jpg" />
+<!-- /seo-preciso -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/pd-ui.css" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: #030304; font-family: 'Inter', system-ui, sans-serif; }
+  #scene { position: fixed; inset: 0; cursor: crosshair; }
+  .brand-bar { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 30; background: var(--grad); }
+
+  /* barra superior compartida con el resto del catálogo */
+  .barra-top {
+    position: fixed; top: 12px; left: 0; right: 0; z-index: 25;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 0 14px; pointer-events: none;
+  }
+  .barra-top > * { pointer-events: auto; }
+  a.back {
+    text-decoration: none; flex-shrink: 0;
+    display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap);
+    padding: 10px 17px; border-radius: 999px; font-size: 13.5px; font-weight: 500;
+    background: var(--glass); border: 1px solid var(--border); color: var(--fg-muted);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+  }
+  a.back:hover { border-color: var(--border-strong); color: var(--fg); }
+
+  .title { position: fixed; top: 76px; left: 0; right: 0; text-align: center; z-index: 20; pointer-events: none; padding: 0 16px; }
+  .title h1 { color: var(--fg); font-size: clamp(17px, 2.4vw, 24px); font-weight: 700; letter-spacing: -0.015em; text-shadow: 0 2px 24px rgba(0,0,0,0.9); }
+  .title p { color: var(--fg-muted); font-size: 13.5px; margin-top: 5px; text-shadow: 0 1px 14px rgba(0,0,0,0.9); }
+
+  /* marcador del partido */
+  #marcador {
+    position: fixed; top: 136px; left: 50%; transform: translateX(-50%); z-index: 22;
+    display: none; align-items: center; gap: 18px; padding: 10px 22px; border-radius: 999px;
+    background: var(--glass); border: 1px solid var(--border);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    font-variant-numeric: tabular-nums;
+  }
+  #marcador b { font-size: 22px; font-weight: 800; color: var(--cyan); min-width: 64px; text-align: center; }
+  #marcador .vidas { font-size: 17px; letter-spacing: 2px; }
+  #marcador .tiempo { font-size: 16px; font-weight: 700; color: var(--fg-muted); min-width: 44px; text-align: center; }
+  #combo {
+    position: fixed; top: 196px; left: 50%; transform: translateX(-50%); z-index: 22;
+    font-size: 15px; font-weight: 800; color: var(--magenta); display: none;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.8); letter-spacing: 0.06em;
+  }
+
+  /* mira central */
+  #mira {
+    position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%); z-index: 18;
+    width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.65);
+    pointer-events: none; display: none;
+    box-shadow: 0 0 12px rgba(0,0,0,0.5), inset 0 0 8px rgba(77,238,234,0.35);
+  }
+  #mira::after { content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+    width: 4px; height: 4px; border-radius: 50%; background: var(--cyan); }
+
+  /* cursores de mano */
+  .mano {
+    position: fixed; z-index: 19; width: 64px; height: 64px; border-radius: 50%;
+    pointer-events: none; display: none; transform: translate(-50%,-50%);
+    background: radial-gradient(circle, rgba(77,238,234,0.45), rgba(77,238,234,0.08) 65%, transparent 70%);
+    border: 2px solid rgba(77,238,234,0.8);
+  }
+  .mano.golpe { background: radial-gradient(circle, rgba(217,77,232,0.55), transparent 70%); border-color: var(--magenta); }
+
+  /* HUD inferior */
+  .hud { position: fixed; bottom: 22px; left: 0; right: 0; z-index: 20; display: flex; justify-content: center; }
+  .panel-control {
+    pointer-events: auto; display: flex; align-items: center; gap: clamp(12px, 2vw, 22px);
+    padding: 14px clamp(14px, 2vw, 20px); border-radius: var(--radius);
+    background: var(--glass); border: 1px solid var(--border);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+    max-width: calc(100vw - 24px); flex-wrap: wrap; justify-content: center;
+  }
+  .grupo { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+  .grupo[hidden] { display: none; }
+  .grupo-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-dim); padding-left: 3px; }
+  .separador { width: 1px; align-self: stretch; background: var(--border); margin: 4px 0; }
+  .separador[hidden] { display: none; }
+  .acciones { display: flex; gap: 8px; }
+
+  /* portada / fin del partido */
+  .pantalla {
+    position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 22px; text-align: center; padding: 24px;
+    background: radial-gradient(60% 60% at 50% 40%, rgba(61,90,254,0.16), transparent 70%), rgba(6,6,9,0.90);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+  .pantalla.oculta { display: none; }
+  .pantalla h2 { font-size: clamp(30px, 7vw, 52px); font-weight: 900; letter-spacing: -0.03em; color: var(--fg); }
+  .pantalla h2 span { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .pantalla p { color: var(--fg-muted); font-size: 15.5px; max-width: 40ch; line-height: 1.55; }
+  .pasos-juego { display: flex; flex-direction: column; gap: 10px; text-align: left; margin: 6px 0; }
+  .pasos-juego div { display: flex; gap: 12px; align-items: center; color: var(--fg-muted); font-size: 14.5px; }
+  .pasos-juego b {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--grad);
+    color: #06060c; font-size: 13px; font-weight: 800; display: grid; place-items: center;
+  }
+  #resultado { font-size: clamp(48px, 12vw, 86px); font-weight: 900; letter-spacing: -0.03em;
+    background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+    font-variant-numeric: tabular-nums; line-height: 1; }
+  #record-linea { font-size: 14px; color: var(--fg-dim); }
+  #cuenta {
+    position: fixed; inset: 0; z-index: 35; display: none; align-items: center; justify-content: center;
+    font-size: clamp(90px, 24vw, 190px); font-weight: 900; color: var(--fg); pointer-events: none;
+    text-shadow: 0 0 60px rgba(77,238,234,0.55);
+  }
+  #aviso-gol {
+    position: fixed; left: 50%; top: 42%; transform: translate(-50%,-50%); z-index: 21;
+    font-size: clamp(34px, 9vw, 64px); font-weight: 900; letter-spacing: -0.02em;
+    pointer-events: none; opacity: 0; transition: opacity 0.15s;
+    text-shadow: 0 4px 30px rgba(0,0,0,0.8);
+  }
+
+  @media (max-width: 900px) {
+    .barra-top .pd-mini { padding: 5px; }
+    .barra-top .pd-mini-txt { display: none; }
+    .barra-top .pd-minis { flex-wrap: nowrap; gap: 8px; }
+  }
+  @media (max-width: 560px) {
+    .back-txt { display: none; }
+    a.back { padding: 10px 14px; }
+    .title p { display: none; }
+  }
+  @media (max-width: 720px) {
+    .separador { display: none; }
+    .panel-control { padding: 12px; gap: 10px; width: calc(100vw - 20px); }
+    .grupo { width: 100%; }
+    .acciones { width: 100%; }
+    .acciones .pd-btn { flex: 1; padding: 12px 10px; font-size: 13.5px; }
+  }
+  button { cursor: pointer; font-family: inherit; }
+  :focus-visible { outline: 2px solid #4deeea; outline-offset: 2px; border-radius: 8px; }
+  /* VRButton reaplica estilos inline async: se pisa con important (regla del cubo) */
+  #VRButton { left: auto !important; right: 18px !important; bottom: 18px !important; transform: none !important; }
+  @media (pointer: coarse) { #VRButton { display: none !important; } }
+
+  /* ---------- cierre en acción: CTA de conversión ---------- */
+  .cta-final {
+    margin-top: 6px; padding-top: 20px; border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    width: min(360px, 88vw); text-align: center;
+  }
+  .cta-final h3 { font-size: 17px; font-weight: 750; color: var(--fg); letter-spacing: -0.01em; }
+  .cta-final p { font-size: 13.5px; color: var(--fg-dim); margin: 0; }
+  .cta-final .pd-btn--primary { width: 100%; justify-content: center; }
+</style>
+<script defer src="assets/medicion.js"></script>
+</head>
+<body class="pd">
+<div class="brand-bar"></div>
+<div class="barra-top">
+  <a class="back" href="index.html"><span aria-hidden="true">←</span><span class="back-txt">Volver</span></a>
+  <div class="pd-minis pd-minis--compacta">
+    <a class="pd-mini" href="cubo.html">
+      <span class="pd-mini-img"><img src="assets/pano-acuario.jpg?v=4" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Cubo 360</b></span>
+    </a>
+    <a class="pd-mini" href="fachada.html">
+      <span class="pd-mini-img"><img src="assets/mapping-vitrales.jpg" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Mapping</b></span>
+    </a>
+    <a class="pd-mini" href="feria.html">
+      <span class="pd-mini-img"><img src="assets/feria-bg.jpg" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Lluvia de Premios</b></span>
+    </a>
+    <a class="pd-mini" href="ritmo.html">
+      <span class="pd-mini-img"><img src="assets/ritmo-bg.jpg" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Túnel del Ritmo</b></span>
+    </a>
+    <a class="pd-mini" href="ar.html">
+      <span class="pd-mini-img"><img src="assets/estadio-bg.jpg?v=3" alt="" loading="lazy" /></span>
+      <span class="pd-mini-txt"><b>Metropolitano</b></span>
+    </a>
+  </div>
+</div>
+<div class="title">
+  <h1>Golazo VR</h1>
+  <p>Eres el portero: que nada cruce tu línea · 60 segundos · 3 vidas</p>
+</div>
+
+<div id="marcador">
+  <b id="puntos">0</b>
+  <span class="vidas" id="vidas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px;vertical-align:-2px"><circle cx="12" cy="12" r="9"/><path d="M12 7.5 16 10.5 14.5 15h-5L8 10.5z" fill="currentColor" stroke="none"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px;vertical-align:-2px"><circle cx="12" cy="12" r="9"/><path d="M12 7.5 16 10.5 14.5 15h-5L8 10.5z" fill="currentColor" stroke="none"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px;vertical-align:-2px"><circle cx="12" cy="12" r="9"/><path d="M12 7.5 16 10.5 14.5 15h-5L8 10.5z" fill="currentColor" stroke="none"/></svg></span>
+  <span class="tiempo" id="tiempo">60</span>
+</div>
+<div id="combo"></div>
+<div id="mira"></div>
+<div class="mano" id="mano0"></div>
+<div class="mano" id="mano1"></div>
+<div id="aviso-gol"></div>
+<div id="cuenta"></div>
+
+<div id="scene"></div>
+
+<div class="hud">
+  <div class="panel-control">
+    <div class="grupo">
+      <span class="grupo-label">Partido</span>
+      <div class="acciones"><button class="pd-btn pd-btn--primary" id="btn-jugar" type="button">▶ Jugar</button></div>
+    </div>
+    <div class="separador" id="sep-vista" hidden></div>
+    <div class="grupo" id="grupo-vista" hidden>
+      <span class="grupo-label">Cómo lo ves</span>
+      <div class="acciones" id="modos"></div>
+    </div>
+    <div class="separador"></div>
+    <div class="grupo">
+      <span class="grupo-label">Interacción</span>
+      <div class="acciones"><button class="pd-btn" id="btn-manos" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-3px;margin-right:7px"><path d="M18 11V6a2 2 0 0 0-4 0v5"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg><span id="btn-manos-txt">Modo manos</span></button></div>
+    </div>
+  </div>
+</div>
+
+<div class="pantalla" id="portada">
+  <h2>Golazo <span>VR</span></h2>
+  <p>Eres el portero. Los remates llegan desde la cancha — atájalos antes de que crucen tu línea de gol.</p>
+  <div class="pasos-juego">
+    <div><b>1</b><span>Estás bajo el arco: arrastra para mirar, o gira el celular en Vista 360.</span></div>
+    <div><b>2</b><span>Toca el balón para atajarlo — o activa el modo manos y despeja con palmadas frente a la cámara.</span></div>
+    <div><b>3</b><span>En gafas VR atajas con la mirada: fija la vista en el balón.</span></div>
+  </div>
+  <button class="pd-btn pd-btn--primary" id="btn-empezar" type="button">▶ Jugar ahora</button>
+  <p id="record-linea"></p>
+</div>
+
+<div class="pantalla oculta" id="final">
+  <p style="font-size:15px;letter-spacing:0.18em;text-transform:uppercase;color:var(--cyan);font-weight:700">Fin del partido</p>
+  <div id="resultado">0</div>
+  <p id="final-detalle"></p>
+    <div class="cta-final">
+    <h3>¿La quieres con tu marca?</h3>
+    <p>Creamos experiencias VR interactivas como esta para eventos y campañas.</p>
+    <a class="pd-btn pd-btn--primary" href="https://wa.me/573207333874?text=Hola%21%20Prob%C3%A9%20Golazo%20VR%20en%20persistenciadigital.com%20y%20quiero%20una%20experiencia%20VR%20interactiva%20para%20mi%20marca." target="_blank" rel="noopener">Quiero una para mi marca</a>
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+    <button class="pd-btn pd-btn--primary" id="btn-otra" type="button">↻ Otra vez</button>
+    <a class="pd-btn" href="index.html">Ver más experiencias</a>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/" } }
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+  import { VRButton } from 'three/addons/webxr/VRButton.js';
+
+  // ---------- escenario ----------
+  const container = document.getElementById('scene');
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.xr.enabled = true;
+  container.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 200);
+  const rig = new THREE.Group();
+  rig.add(camera);
+  scene.add(rig);
+  // eres el PORTERO: parado bajo el arco del extremo +x, mirando la cancha
+  const LINEA_GOL = 14.4; // x de la línea (el arco está en x = L2/2 - 0.6 = 14.4)
+  rig.position.set(LINEA_GOL - 1.1, 0, 0);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const dl = new THREE.DirectionalLight(0xffffff, 0.55); dl.position.set(3, 6, 2); scene.add(dl);
+
+  // ---------- LA CANCHA: fútbol sala interior con la marca Persistencia ----------
+  // (construida por nosotros: piso pintado con el logo, paredes LED con el
+  //  degradado de marca en marquesina, arcos y cercha de luces)
+  const CANCHA = { largo: 30, ancho: 20, alto: 8, piso: -1.5 };
+  const ledMats = []; // texturas que se desplazan como pantalla LED
+
+  function texturaPiso() {
+    const c = document.createElement('canvas');
+    c.width = 1500; c.height = 1000; // 1px = 2cm
+    const g = c.getContext('2d');
+    // duela deportiva azul oscuro con vetas
+    g.fillStyle = '#101726'; g.fillRect(0, 0, 1500, 1000);
+    for (let x = 0; x < 1500; x += 50) {
+      g.fillStyle = x % 100 ? 'rgba(255,255,255,0.022)' : 'rgba(0,0,0,0.15)';
+      g.fillRect(x, 0, 25, 1000);
+    }
+    // líneas de cancha
+    g.strokeStyle = 'rgba(244,245,250,0.9)'; g.lineWidth = 6;
+    g.strokeRect(60, 60, 1380, 880);
+    g.beginPath(); g.moveTo(750, 60); g.lineTo(750, 940); g.stroke();
+    // áreas
+    g.strokeRect(60, 290, 190, 420);
+    g.strokeRect(1250, 290, 190, 420);
+    // círculo central con el degradado de marca
+    const grad = g.createLinearGradient(600, 0, 900, 0);
+    grad.addColorStop(0, '#4deeea'); grad.addColorStop(0.38, '#3d5afe');
+    grad.addColorStop(0.68, '#7b4de0'); grad.addColorStop(1, '#d94de8');
+    g.strokeStyle = grad; g.lineWidth = 10;
+    g.beginPath(); g.arc(750, 500, 150, 0, Math.PI * 2); g.stroke();
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 8;
+    // el isotipo cae al centro cuando cargue (la textura se refresca sola)
+    const iso = new Image();
+    iso.onload = () => { g.globalAlpha = 0.9; g.drawImage(iso, 690, 440, 120, 120); g.globalAlpha = 1; tex.needsUpdate = true; };
+    iso.src = 'assets/isotipo.webp';
+    return tex;
+  }
+
+  function texturaLED(texto) {
+    const c = document.createElement('canvas');
+    c.width = 2048; c.height = 128;
+    const g = c.getContext('2d');
+    g.fillStyle = '#07070d'; g.fillRect(0, 0, 2048, 128);
+    const grad = g.createLinearGradient(0, 0, 2048, 0);
+    grad.addColorStop(0, '#4deeea'); grad.addColorStop(0.38, '#3d5afe');
+    grad.addColorStop(0.68, '#7b4de0'); grad.addColorStop(1, '#d94de8');
+    g.fillStyle = grad;
+    g.font = '900 84px Inter, Arial, sans-serif';
+    g.textBaseline = 'middle';
+    let x = 40;
+    while (x < 2048) { g.fillText(texto, x, 70); x += g.measureText(texto).width + 140; }
+    // rejilla de píxeles LED
+    g.fillStyle = 'rgba(0,0,0,0.35)';
+    for (let px = 0; px < 2048; px += 4) g.fillRect(px, 0, 1, 128);
+    for (let py = 0; py < 128; py += 4) g.fillRect(0, py, 2048, 1);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = THREE.RepeatWrapping;
+    return tex;
+  }
+
+  // graderías pintadas: filas oscuras con público de puntos en colores de marca
+  function texturaGrada() {
+    const c = document.createElement('canvas');
+    c.width = 1024; c.height = 256;
+    const g = c.getContext('2d');
+    g.fillStyle = '#0b0b14'; g.fillRect(0, 0, 1024, 256);
+    const colores = ['#4deeea', '#3d5afe', '#7b4de0', '#d94de8', '#f4f5fa', '#8890a8'];
+    let semilla = 7;
+    const rnd = () => { semilla = (semilla * 16807) % 2147483647; return semilla / 2147483647; };
+    for (let fila = 0; fila < 6; fila++) {
+      const y = 18 + fila * 40;
+      g.fillStyle = 'rgba(255,255,255,0.05)'; g.fillRect(0, y + 26, 1024, 3); // borde del escalón
+      for (let x = 10; x < 1024; x += 13) {
+        if (rnd() < 0.72) {
+          g.fillStyle = colores[Math.floor(rnd() * colores.length)];
+          g.globalAlpha = 0.35 + rnd() * 0.45;
+          g.beginPath(); g.arc(x + rnd() * 6, y + rnd() * 14, 3.2, 0, Math.PI * 2); g.fill();
+        }
+      }
+    }
+    g.globalAlpha = 1;
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = THREE.RepeatWrapping;
+    return tex;
+  }
+
+  function construirCancha() {
+    const { largo: L2, ancho: A, alto: H, piso: Y } = CANCHA;
+    // piso
+    const piso = new THREE.Mesh(new THREE.PlaneGeometry(L2, A), new THREE.MeshStandardMaterial({ map: texturaPiso(), roughness: 0.6, metalness: 0.1 }));
+    piso.rotation.x = -Math.PI / 2; piso.position.y = Y;
+    scene.add(piso);
+    // techo oscuro
+    const techo = new THREE.Mesh(new THREE.PlaneGeometry(L2, A), new THREE.MeshStandardMaterial({ color: 0x07070c, roughness: 1 }));
+    techo.rotation.x = Math.PI / 2; techo.position.y = Y + H;
+    scene.add(techo);
+    // paredes: banda LED de marca a media altura, resto oscuro
+    const paredMat = new THREE.MeshStandardMaterial({ color: 0x0a0a13, roughness: 0.95 });
+    const bandas = [
+      { w: L2, x: 0, z: -A / 2, ry: 0 },
+      { w: L2, x: 0, z: A / 2, ry: Math.PI },
+      { w: A, x: -L2 / 2, z: 0, ry: Math.PI / 2 },
+      { w: A, x: L2 / 2, z: 0, ry: -Math.PI / 2 },
+    ];
+    for (const b of bandas) {
+      const pared = new THREE.Mesh(new THREE.PlaneGeometry(b.w, H), paredMat);
+      pared.position.set(b.x, Y + H / 2, b.z); pared.rotation.y = b.ry;
+      scene.add(pared);
+      const ledTex = texturaLED('PERSISTENCIA DIGITAL · GOLAZO VR ·');
+      ledTex.repeat.x = b.w / 16;
+      const led = new THREE.Mesh(new THREE.PlaneGeometry(b.w, 1.1), new THREE.MeshBasicMaterial({ map: ledTex, toneMapped: false }));
+      led.position.set(b.x, Y + 2.6, b.z); led.rotation.y = b.ry;
+      led.translateZ(0.02);
+      scene.add(led);
+      ledMats.push(ledTex);
+      // graderías con público encima de la banda LED
+      const gradaTex = texturaGrada();
+      gradaTex.repeat.x = b.w / 10;
+      const grada = new THREE.Mesh(new THREE.PlaneGeometry(b.w, 3.6), new THREE.MeshBasicMaterial({ map: gradaTex }));
+      grada.position.set(b.x, Y + 5.1, b.z); grada.rotation.y = b.ry;
+      grada.translateZ(0.02);
+      scene.add(grada);
+      // franja superior tenue del degradado
+      const glow = new THREE.Mesh(new THREE.PlaneGeometry(b.w, 0.3), new THREE.MeshBasicMaterial({ color: 0x3d5afe, transparent: true, opacity: 0.5, toneMapped: false }));
+      glow.position.set(b.x, Y + H - 0.5, b.z); glow.rotation.y = b.ry;
+      glow.translateZ(0.02);
+      scene.add(glow);
+    }
+    // arcos en los extremos, con su tablero GOLAZO VR encima
+    const arcoMat = new THREE.MeshStandardMaterial({ color: 0xf4f5fa, roughness: 0.4, emissive: 0x222833 });
+    for (const lado of [-1, 1]) {
+      const arco = new THREE.Group();
+      const poste = () => new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 2.2, 10), arcoMat);
+      const p1 = poste(); p1.position.set(0, Y + 1.1, -1.8);
+      const p2 = poste(); p2.position.set(0, Y + 1.1, 1.8);
+      const trav = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 3.75, 10), arcoMat);
+      trav.rotation.x = Math.PI / 2; trav.position.set(0, Y + 2.2, 0);
+      arco.add(p1, p2, trav);
+      arco.position.x = lado * (L2 / 2 - 0.6);
+      scene.add(arco);
+      // tablero grande sobre el arco
+      const tabTex = texturaLED('  GOLAZO VR  ');
+      tabTex.repeat.x = 0.55;
+      const tablero = new THREE.Mesh(new THREE.PlaneGeometry(7, 1.6), new THREE.MeshBasicMaterial({ map: tabTex, toneMapped: false }));
+      tablero.position.set(lado * (L2 / 2 - 0.08), Y + 6.2, 0);
+      tablero.rotation.y = lado > 0 ? -Math.PI / 2 : Math.PI / 2;
+      scene.add(tablero);
+      ledMats.push(tabTex);
+    }
+    // cercha del techo con reflectores
+    const cerchaMat = new THREE.MeshStandardMaterial({ color: 0x1a1a26, roughness: 0.8 });
+    for (const zx of [-A / 4, A / 4]) {
+      const viga = new THREE.Mesh(new THREE.BoxGeometry(L2 - 4, 0.25, 0.25), cerchaMat);
+      viga.position.set(0, Y + H - 0.8, zx);
+      scene.add(viga);
+      for (const x of [-9, -3, 3, 9]) {
+        const foco = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.34, 0.4, 12), new THREE.MeshStandardMaterial({ color: 0x111118, emissive: 0xf4f5fa, emissiveIntensity: 0.9 }));
+        foco.position.set(x, Y + H - 1.05, zx);
+        scene.add(foco);
+      }
+    }
+    for (const lx of [-9, 9]) { const pl = new THREE.PointLight(0xffffff, 18, 30); pl.position.set(lx, Y + H - 1.6, 0); scene.add(pl); }
+    const spot = new THREE.PointLight(0xffffff, 40, 40);
+    spot.position.set(0, Y + H - 1.4, 0);
+    scene.add(spot);
+  }
+  construirCancha();
+
+  // ---------- balón ----------
+  const gl = new GLTFLoader();
+  const draco = new DRACOLoader();
+  draco.setDecoderPath('./assets/draco/');
+  gl.setDRACOLoader(draco);
+  // ---------- balón procedural: icosaedro truncado clásico ----------
+  // Pentágonos negros + hexágonos blancos construidos por geometría — perfecto,
+  // esférico y sin texturas. Es el respaldo garantizado; si aparece el modelo
+  // de Sketchfab (CC-BY uperesito) en balon-cancha.glb, ese lo reemplaza.
+  function balonProcedural(R) {
+    const f = (1 + Math.sqrt(5)) / 2;
+    // icosaedro base: 12 vértices, 20 caras
+    const V = [
+      [-1, f, 0], [1, f, 0], [-1, -f, 0], [1, -f, 0],
+      [0, -1, f], [0, 1, f], [0, -1, -f], [0, 1, -f],
+      [f, 0, -1], [f, 0, 1], [-f, 0, -1], [-f, 0, 1],
+    ].map((v) => new THREE.Vector3(...v).normalize());
+    const F = [
+      [0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11],
+      [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
+      [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9],
+      [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1],
+    ];
+    const p = (a, b, t) => V[a].clone().lerp(V[b], t).normalize();
+    const caras = []; // { puntos:[Vector3], negra:bool }
+    // truncar: cada cara del icosaedro deja un hexágono
+    for (const [a, b, c] of F) {
+      caras.push({ negra: false, puntos: [p(a, b, 1 / 3), p(a, b, 2 / 3), p(b, c, 1 / 3), p(b, c, 2 / 3), p(c, a, 1 / 3), p(c, a, 2 / 3)] });
+    }
+    // ...y cada vértice deja un pentágono (sus 5 cortes a 1/3, ordenados en ángulo)
+    for (let v = 0; v < 12; v++) {
+      const pts = [];
+      for (const [a, b, c] of F) {
+        for (const [x, y] of [[a, b], [b, c], [c, a]]) {
+          if (x === v) pts.push(p(x, y, 1 / 3));
+        }
+      }
+      // quitar duplicados (cada arista aparece en 2 caras)
+      const unicos = [];
+      for (const q of pts) if (!unicos.some((u) => u.distanceTo(q) < 1e-4)) unicos.push(q);
+      const n = V[v];
+      const t0 = Math.abs(n.x) < 0.9 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
+      const e1 = t0.clone().cross(n).normalize(), e2 = n.clone().cross(e1);
+      unicos.sort((q1, q2) => Math.atan2(q1.dot(e2), q1.dot(e1)) - Math.atan2(q2.dot(e2), q2.dot(e1)));
+      caras.push({ negra: true, puntos: unicos });
+    }
+    // malla: cada cara se abanica desde su centroide, con costura FINA y
+    // triángulos subdivididos (los puntos medios se re-esferizan → silueta redonda)
+    const pos = [], col = [];
+    const blanco = new THREE.Color(0xffffff), negro = new THREE.Color(0x101014);
+    const esf = (q) => q.clone().normalize().multiplyScalar(R);
+    for (const cara of caras) {
+      const cen = cara.puntos.reduce((s, q) => s.add(q), new THREE.Vector3()).divideScalar(cara.puntos.length).normalize();
+      const c = cara.negra ? negro : blanco;
+      const enc = (q) => q.clone().lerp(cen, 0.02).normalize();
+      const tri = (a, b, d) => {
+        pos.push(a.x, a.y, a.z, b.x, b.y, b.z, d.x, d.y, d.z);
+        for (let k = 0; k < 3; k++) col.push(c.r, c.g, c.b);
+      };
+      const C = esf(cen);
+      for (let i = 0; i < cara.puntos.length; i++) {
+        const A = esf(enc(cara.puntos[i])), B = esf(enc(cara.puntos[(i + 1) % cara.puntos.length]));
+        // subdividir en 4: esquinas + medios re-esferizados
+        const AB = esf(A.clone().add(B)), AC = esf(A.clone().add(C)), BC = esf(B.clone().add(C));
+        tri(C, AC, BC); tri(AC, A, AB); tri(AB, B, BC); tri(AC, AB, BC);
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    geo.computeVertexNormals();
+    const bola = new THREE.Group();
+    bola.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.45, metalness: 0.05, emissive: 0x2a2a30, emissiveIntensity: 0.55 })));
+    // esfera interior oscura: se asoma por las costuras
+    bola.add(new THREE.Mesh(new THREE.SphereGeometry(R * 0.992, 24, 18), new THREE.MeshStandardMaterial({ color: 0x3a3a42, roughness: 0.9 })));
+    return bola;
+  }
+  let balonBase = balonProcedural(0.45);
+  // si Anthony deja el modelo de Sketchfab, entra solo (crédito: uperesito, CC-BY)
+  gl.load('assets/models/balon-cancha.glb', (g) => {
+    const m = g.scene;
+    const box = new THREE.Box3().setFromObject(m);
+    const s = box.getSize(new THREE.Vector3());
+    const D = 0.9;
+    m.scale.set(D / s.x, D / s.y, D / s.z);
+    const c = box.getCenter(new THREE.Vector3());
+    m.position.set(-c.x * m.scale.x, -c.y * m.scale.y, -c.z * m.scale.z);
+    balonBase = m;
+  }, undefined, () => {});
+
+  // ---------- audio sintetizado (sin assets) ----------
+  let actx = null;
+  const audio = () => { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); return actx; };
+  function beep(f1, f2, dur, tipo = 'sine', vol = 0.2) {
+    try {
+      const a = audio(), o = a.createOscillator(), g = a.createGain();
+      o.type = tipo; o.frequency.setValueAtTime(f1, a.currentTime);
+      o.frequency.exponentialRampToValueAtTime(f2, a.currentTime + dur);
+      g.gain.setValueAtTime(vol, a.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + dur);
+      o.connect(g).connect(a.destination);
+      o.start(); o.stop(a.currentTime + dur);
+    } catch (e) {}
+  }
+  const sndAtajada = () => beep(500, 950, 0.11, 'triangle', 0.25);
+  const sndDorado = () => { beep(700, 1400, 0.14, 'triangle', 0.25); setTimeout(() => beep(900, 1800, 0.16, 'triangle', 0.22), 90); };
+  const sndGol = () => beep(220, 90, 0.32, 'sawtooth', 0.22);
+  const sndCuenta = () => beep(660, 660, 0.09, 'square', 0.12);
+  const sndFin = () => { beep(880, 880, 0.5, 'square', 0.14); setTimeout(() => beep(660, 660, 0.5, 'square', 0.14), 260); };
+
+  // ---------- mirada / VR móvil (patrón del cubo) ----------
+  let lon = -90, lat = 0, isDown = false, sx = 0, sy = 0, slon = 0, slat = 0;
+  container.addEventListener('mousedown', (e) => { isDown = true; sx = e.clientX; sy = e.clientY; slon = lon; slat = lat; });
+  addEventListener('mousemove', (e) => { if (isDown) { lon = slon + (sx - e.clientX) * 0.16; lat = Math.max(-85, Math.min(85, slat + (e.clientY - sy) * 0.16)); } });
+  addEventListener('mouseup', () => (isDown = false));
+  container.addEventListener('touchstart', (e) => { isDown = true; sx = e.touches[0].clientX; sy = e.touches[0].clientY; slon = lon; slat = lat; }, { passive: true });
+  container.addEventListener('touchmove', (e) => { if (isDown) { lon = slon + (sx - e.touches[0].clientX) * 0.22; lat = Math.max(-85, Math.min(85, slat + (e.touches[0].clientY - sy) * 0.22)); } }, { passive: true });
+  container.addEventListener('touchend', () => (isDown = false));
+
+  const mvr = { on: false, stereo: false, quat: new THREE.Quaternion(), hasGyro: false };
+  const stereoCam = new THREE.StereoCamera();
+  stereoCam.eyeSep = 0.064;
+  const _zee = new THREE.Vector3(0, 0, 1), _euler = new THREE.Euler(), _q0 = new THREE.Quaternion();
+  const _q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
+  const deg = Math.PI / 180;
+  addEventListener('deviceorientation', (e) => {
+    if (e.alpha === null) return;
+    mvr.hasGyro = true;
+    const orient = (screen.orientation && screen.orientation.angle ? screen.orientation.angle : window.orientation || 0) * deg;
+    _euler.set(e.beta * deg, e.alpha * deg, -e.gamma * deg, 'YXZ');
+    mvr.quat.setFromEuler(_euler);
+    mvr.quat.multiply(_q1);
+    mvr.quat.multiply(_q0.setFromAxisAngle(_zee, -orient));
+  });
+
+  const modosEl = document.getElementById('modos');
+  const grupoVista = document.getElementById('grupo-vista');
+  const sepVista = document.getElementById('sep-vista');
+  const monoBtn = document.createElement('button');
+  monoBtn.type = 'button'; monoBtn.className = 'pd-btn'; monoBtn.textContent = 'Vista 360';
+  modosEl.appendChild(monoBtn);
+  const stereoBtn = document.createElement('button');
+  stereoBtn.type = 'button'; stereoBtn.className = 'pd-btn'; stereoBtn.textContent = 'Gafas VR';
+  modosEl.appendChild(stereoBtn);
+  const mvrExit = document.createElement('button');
+  mvrExit.style.cssText = 'position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:60;min-height:44px;padding:10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,0.3);background:rgba(5,5,10,0.75);color:#f3f4f9;font-size:14px;display:none;';
+  document.body.appendChild(mvrExit);
+  if ('ontouchstart' in window) grupoVista.hidden = sepVista.hidden = false;
+  async function enterMobileVR(useStereo) {
+    if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+      try { await DeviceOrientationEvent.requestPermission(); } catch (e) {}
+    }
+    try { await document.documentElement.requestFullscreen(); } catch (e) {}
+    if (useStereo) { try { await screen.orientation.lock('landscape'); } catch (e) {} }
+    mvr.on = true; mvr.stereo = useStereo;
+    grupoVista.hidden = sepVista.hidden = true;
+    mvrExit.textContent = useStereo ? 'Salir de VR' : 'Salir de 360';
+    mvrExit.style.display = 'block';
+    if (useStereo) {
+      document.querySelectorAll('.hud, .title, .barra-top, #marcador, #combo, #mira').forEach((el) => (el.style.visibility = 'hidden'));
+      hudVR.visible = true; reticula.visible = true;
+    } else {
+      document.querySelectorAll('.title').forEach((el) => (el.style.visibility = 'hidden'));
+    }
+  }
+  function exitMobileVR() {
+    mvr.on = false; mvr.stereo = false;
+    mvrExit.style.display = 'none';
+    if ('ontouchstart' in window) grupoVista.hidden = sepVista.hidden = false;
+    document.querySelectorAll('.hud, .title, .barra-top, #marcador, #combo, #mira').forEach((el) => (el.style.visibility = ''));
+    hudVR.visible = false; reticula.visible = false;
+    try { screen.orientation.unlock(); } catch (e) {}
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    renderer.setViewport(0, 0, innerWidth, innerHeight);
+    renderer.setScissorTest(false);
+    actualizarMarcador();
+  }
+  monoBtn.addEventListener('click', () => enterMobileVR(false));
+  stereoBtn.addEventListener('click', () => enterMobileVR(true));
+  mvrExit.addEventListener('click', exitMobileVR);
+  // WebXR en escritorio (visores reales)
+  if (!('ontouchstart' in window) && navigator.xr) {
+    const vrBtn = VRButton.createButton(renderer);
+    document.body.appendChild(vrBtn);
+  }
+
+  // ---------- HUD dentro de la escena (para gafas) ----------
+  const hudCanvas = document.createElement('canvas');
+  hudCanvas.width = 512; hudCanvas.height = 128;
+  const hudCtx = hudCanvas.getContext('2d');
+  const hudTex = new THREE.CanvasTexture(hudCanvas);
+  const hudVR = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.6, 0.4),
+    new THREE.MeshBasicMaterial({ map: hudTex, transparent: true, depthTest: false })
+  );
+  hudVR.position.set(0, 1.05, -2.6);
+  hudVR.renderOrder = 999;
+  hudVR.visible = false;
+  camera.add(hudVR);
+  function pintarHudVR() {
+    hudCtx.clearRect(0, 0, 512, 128);
+    hudCtx.fillStyle = 'rgba(8,8,14,0.7)';
+    hudCtx.beginPath(); hudCtx.roundRect(0, 20, 512, 88, 44); hudCtx.fill();
+    hudCtx.font = '700 44px Inter, sans-serif';
+    hudCtx.fillStyle = '#4deeea'; hudCtx.textAlign = 'left';
+    hudCtx.fillText(String(juego.puntos), 40, 80);
+    hudCtx.fillStyle = '#f4f5fa'; hudCtx.textAlign = 'center';
+    for (let vi = 0; vi < Math.max(0, juego.vidas); vi++) {
+      hudCtx.beginPath();
+      hudCtx.arc(256 + (vi - (juego.vidas - 1) / 2) * 46, 72, 15, 0, Math.PI * 2);
+      hudCtx.fillStyle = '#ffffff';
+      hudCtx.fill();
+      hudCtx.beginPath();
+      hudCtx.arc(256 + (vi - (juego.vidas - 1) / 2) * 46, 72, 6, 0, Math.PI * 2);
+      hudCtx.fillStyle = '#111621';
+      hudCtx.fill();
+    }
+    hudCtx.fillStyle = '#eaf2ff';
+    hudCtx.fillStyle = '#a8adc0'; hudCtx.textAlign = 'right';
+    hudCtx.fillText(String(Math.ceil(juego.resta)), 472, 80);
+    hudTex.needsUpdate = true;
+  }
+  // retícula de mirada (para gafas)
+  const reticula = new THREE.Mesh(
+    new THREE.RingGeometry(0.028, 0.04, 32),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthTest: false })
+  );
+  reticula.position.set(0, 0, -2);
+  reticula.renderOrder = 999;
+  reticula.visible = false;
+  camera.add(reticula);
+
+  // ---------- modo manos (MediaPipe, patrón del cubo) ----------
+  const manosEl = [document.getElementById('mano0'), document.getElementById('mano1')];
+  const hands = [
+    { x: 0.5, y: 0.5, e: 0, t: -1e9, px: 0.5, py: 0.5 },
+    { x: 0.5, y: 0.5, e: 0, t: -1e9, px: 0.5, py: 0.5 },
+  ];
+  const ix = { on: false, video: null };
+  let landmarker = null, ixStarting = false;
+  const btnManos = document.getElementById('btn-manos');
+  async function getCamera() {
+    const attempts = [
+      { video: { facingMode: 'user', width: { ideal: 960 }, height: { ideal: 540 } }, audio: false },
+      { video: true, audio: false },
+    ];
+    let lastErr;
+    for (const c of attempts) { try { return await navigator.mediaDevices.getUserMedia(c); } catch (e) { lastErr = e; } }
+    throw lastErr;
+  }
+  async function startManos() {
+    if (ix.on || ixStarting) return;
+    ixStarting = true;
+    document.getElementById('btn-manos-txt').textContent = 'Activando…';
+    try {
+      const stream = await getCamera();
+      ix.video = document.createElement('video');
+      ix.video.srcObject = stream;
+      ix.video.muted = true; ix.video.playsInline = true;
+      await ix.video.play();
+      const mp = await import('./assets/mediapipe/vision_bundle.mjs');
+      const files = await mp.FilesetResolver.forVisionTasks('assets/mediapipe/wasm');
+      landmarker = await mp.HandLandmarker.createFromOptions(files, {
+        baseOptions: { modelAssetPath: 'assets/mediapipe/hand_landmarker.task', delegate: 'GPU' },
+        runningMode: 'VIDEO', numHands: 2,
+      });
+      ix.on = true;
+      document.getElementById('btn-manos-txt').textContent = 'Manos activas';
+      btnManos.classList.add('pd-btn--activo');
+    } catch (e) {
+      console.warn('manos:', e);
+      document.getElementById('btn-manos-txt').textContent = 'Reintentar cámara';
+    } finally { ixStarting = false; }
+  }
+  btnManos.addEventListener('click', startManos);
+  let lastSample = 0;
+  function sampleHands(t) {
+    if (!ix.on || !landmarker || ix.video.readyState < 2 || t - lastSample < 33) return;
+    lastSample = t;
+    const res = landmarker.detectForVideo(ix.video, t);
+    const found = res.landmarks || [];
+    for (let h = 0; h < 2; h++) {
+      const lm = found[h];
+      if (!lm) { manosEl[h].style.display = 'none'; continue; }
+      const palm = lm[9], H = hands[h];
+      H.px = H.x; H.py = H.y;
+      H.x = 1 - palm.x; H.y = palm.y;
+      const dx = H.x - H.px, dy = H.y - H.py;
+      H.e = Math.min(1, Math.hypot(dx, dy) * 30);
+      H.t = performance.now();
+      if (!mvr.stereo) {
+        manosEl[h].style.display = 'block';
+        manosEl[h].style.left = H.x * innerWidth + 'px';
+        manosEl[h].style.top = H.y * innerHeight + 'px';
+        manosEl[h].classList.toggle('golpe', H.e > 0.25);
+      }
+    }
+  }
+
+  // ---------- el juego ----------
+  const juego = { estado: 'idle', puntos: 0, vidas: 3, resta: 60, combo: 0, mejores: 0, spawnCada: 2.2, velocidad: 4, sinceSpawn: 0, contador: 0 };
+  const balones = [];
+  const RECORD_KEY = 'golazo-record';
+  const record = () => parseInt(localStorage.getItem(RECORD_KEY) || '0', 10);
+  document.getElementById('record-linea').textContent = record() ? 'Tu récord: ' + record() + ' puntos' : '';
+
+  const elPuntos = document.getElementById('puntos');
+  const elVidas = document.getElementById('vidas');
+  const elTiempo = document.getElementById('tiempo');
+  const elCombo = document.getElementById('combo');
+  const elAviso = document.getElementById('aviso-gol');
+  function actualizarMarcador() {
+    elPuntos.textContent = juego.puntos;
+    elVidas.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:15px;height:15px;vertical-align:-2px"><circle cx="12" cy="12" r="9"/><path d="M12 7.5 16 10.5 14.5 15h-5L8 10.5z" fill="currentColor" stroke="none"/></svg>'.repeat(Math.max(0, juego.vidas));
+    elTiempo.textContent = Math.ceil(juego.resta);
+    if (mvr.stereo || renderer.xr.isPresenting) pintarHudVR();
+  }
+  function aviso(txt, color) {
+    elAviso.textContent = txt;
+    elAviso.style.color = color;
+    elAviso.style.opacity = 1;
+    clearTimeout(aviso._t);
+    aviso._t = setTimeout(() => (elAviso.style.opacity = 0), 650);
+  }
+
+  function crearBalon() {
+    if (!balonBase) return;
+    const dorado = (juego.contador + 1) % 7 === 0;
+    const m = balonBase.clone(true);
+    if (dorado) m.traverse((o) => {
+      if (o.isMesh) { o.material = o.material.clone(); o.material.color = new THREE.Color(0xffd34d); o.material.emissive = new THREE.Color(0x8a6a00); }
+    });
+    // proxy invisible para el raycast (más generoso que la malla)
+    const proxy = new THREE.Mesh(new THREE.SphereGeometry(1.15, 12, 10), new THREE.MeshBasicMaterial({ visible: false }));
+    m.add(proxy);
+    // remate desde la cancha: nace en el campo, delante del portero
+    const R = 11 + Math.random() * 8;
+    const az = (Math.random() * 2 - 1) * 0.85; // abanico de ~±49° frente al arco
+    m.position.set(
+      Math.max(-13.5, rig.position.x - Math.cos(az) * R),
+      -0.9 + Math.random() * 2.6,
+      Math.max(-8.6, Math.min(8.6, Math.sin(az) * R))
+    );
+    // el remate va a la boca del arco: si no lo atajas, es gol
+    const destino = new THREE.Vector3(
+      LINEA_GOL + 0.6,
+      -1.0 + Math.random() * 2.6,
+      (Math.random() - 0.5) * 3.3
+    );
+    const dir = destino.clone().sub(m.position).normalize();
+    const b = { m, proxy, dir, dorado, spin: new THREE.Vector3(Math.random(), Math.random(), Math.random()), viva: true };
+    balones.push(b);
+    scene.add(m);
+    juego.contador++;
+  }
+
+  function atajar(b, porManos) {
+    if (!b.viva) return;
+    b.viva = false;
+    juego.combo++;
+    const pts = (b.dorado ? 50 : 10) * Math.min(4, 1 + Math.floor(juego.combo / 5));
+    juego.puntos += pts;
+    if (b.dorado) sndDorado(); else sndAtajada();
+    aviso(porManos ? '¡PALMADA! +' + pts : '¡ATAJADA! +' + pts, b.dorado ? '#ffd34d' : '#4deeea');
+    if (juego.combo >= 5) { elCombo.textContent = 'COMBO ×' + Math.min(4, 1 + Math.floor(juego.combo / 5)); elCombo.style.display = 'block'; }
+    actualizarMarcador();
+    // el despeje sale de vuelta a la cancha CON FÍSICA: cae, rebota y rueda
+    const vel = b.m.position.clone().sub(rig.position).normalize();
+    vel.x = -Math.abs(vel.x) - 0.7;          // siempre hacia el campo
+    vel.y = 0.45 + Math.random() * 0.5;      // parabólica hacia arriba
+    vel.z += (Math.random() - 0.5) * 0.6;
+    vel.normalize().multiplyScalar(9 + Math.random() * 3);
+    b.suelo = { vel, reposo: 0 };
+  }
+
+  function gol(b) {
+    b.viva = false;
+    b.fuera = 0.001;
+    juego.vidas--;
+    juego.combo = 0;
+    elCombo.style.display = 'none';
+    sndGol();
+    aviso('¡GOL EN CONTRA!', '#ff5d73');
+    actualizarMarcador();
+    if (juego.vidas <= 0) terminar();
+  }
+
+  function empezar() {
+    balones.forEach((b) => scene.remove(b.m));
+    balones.length = 0;
+    Object.assign(juego, { estado: 'countdown', puntos: 0, vidas: 3, resta: 60, combo: 0, spawnCada: 2.2, velocidad: 4, sinceSpawn: 0, contador: 0 });
+    document.getElementById('portada').classList.add('oculta');
+    document.getElementById('final').classList.add('oculta');
+    document.getElementById('marcador').style.display = 'flex';
+    document.getElementById('mira').style.display = mvr.stereo ? 'none' : 'block';
+    actualizarMarcador();
+    audio();
+    let n = 3;
+    const cuenta = document.getElementById('cuenta');
+    cuenta.style.display = 'flex';
+    const tick = () => {
+      if (n > 0) { cuenta.textContent = n; sndCuenta(); n--; setTimeout(tick, 800); }
+      else { cuenta.style.display = 'none'; juego.estado = 'playing'; beep(520, 1040, 0.25, 'triangle', 0.2); }
+    };
+    tick();
+  }
+
+  function terminar() {
+    juego.estado = 'over';
+    sndFin();
+    const anterior = record();
+    const esRecord = juego.puntos > anterior;
+    if (esRecord) localStorage.setItem(RECORD_KEY, String(juego.puntos));
+    document.getElementById('resultado').textContent = juego.puntos;
+    document.getElementById('final-detalle').textContent = esRecord
+      ? (anterior ? '¡Nuevo récord! El anterior era ' + anterior + ' puntos.' : '¡Primer récord registrado! Reta a alguien a superarlo.')
+      : 'Tu récord sigue en ' + anterior + ' puntos. ¿Otra ronda?';
+    if (mvr.on) exitMobileVR();
+    document.getElementById('final').classList.remove('oculta');
+    document.getElementById('marcador').style.display = 'none';
+    document.getElementById('mira').style.display = 'none';
+    elCombo.style.display = 'none';
+  }
+
+  document.getElementById('btn-empezar').addEventListener('click', empezar);
+  document.getElementById('btn-jugar').addEventListener('click', empezar);
+  document.getElementById('btn-otra').addEventListener('click', empezar);
+
+  // ---------- atajar con puntero / mirada / manos ----------
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  function rayoDesde(clientX, clientY) {
+    ndc.set((clientX / innerWidth) * 2 - 1, -(clientY / innerHeight) * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+    const proxies = balones.filter((b) => b.viva).map((b) => b.proxy);
+    const hit = raycaster.intersectObjects(proxies, false)[0];
+    if (hit) {
+      const b = balones.find((x) => x.proxy === hit.object);
+      if (b) atajar(b, false);
+      return true;
+    }
+    return false;
+  }
+  renderer.domElement.addEventListener('click', (e) => {
+    if (juego.estado !== 'playing') return;
+    // en estéreo cualquier toque ataja lo que la mirada tenga enfrente
+    if (mvr.stereo) { rayoDesde(innerWidth / 2, innerHeight / 2); return; }
+    rayoDesde(e.clientX, e.clientY);
+  });
+
+  let gazeTarget = null, gazeTime = 0;
+  function tickGaze(dt) {
+    if (!(mvr.stereo || renderer.xr.isPresenting) || juego.estado !== 'playing') return;
+    ndc.set(0, 0);
+    raycaster.setFromCamera(ndc, camera);
+    const proxies = balones.filter((b) => b.viva).map((b) => b.proxy);
+    const hit = raycaster.intersectObjects(proxies, false)[0];
+    const b = hit ? balones.find((x) => x.proxy === hit.object) : null;
+    if (b && b === gazeTarget) {
+      gazeTime += dt;
+      reticula.material.color.set(0x4deeea);
+      reticula.scale.setScalar(1 + gazeTime * 2.2);
+      if (gazeTime > 0.3) { atajar(b, false); gazeTarget = null; gazeTime = 0; reticula.scale.setScalar(1); }
+    } else {
+      gazeTarget = b; gazeTime = 0;
+      reticula.material.color.set(0xffffff);
+      reticula.scale.setScalar(1);
+    }
+  }
+
+  const _v = new THREE.Vector3();
+  function tickManos() {
+    if (!ix.on || juego.estado !== 'playing' || mvr.stereo) return;
+    const ahora = performance.now();
+    for (const b of balones) {
+      if (!b.viva) continue;
+      _v.copy(b.m.position).project(camera);
+      if (_v.z > 1) continue; // detrás
+      const bx = (_v.x + 1) / 2, by = 1 - (_v.y + 1) / 2;
+      for (const H of hands) {
+        if (ahora - H.t > 300) continue; // mano no vista hace rato
+        if (H.e < 0.12) continue;        // la palmada exige movimiento
+        if (Math.hypot(H.x - bx, H.y - by) < 0.085) { atajar(b, true); break; }
+      }
+    }
+  }
+
+  // ---------- bucle ----------
+  const reloj = new THREE.Clock();
+  renderer.setAnimationLoop((t) => {
+    const dt = Math.min(0.05, reloj.getDelta());
+    const inXR = renderer.xr.isPresenting;
+    if (mvr.on && mvr.hasGyro) camera.quaternion.copy(mvr.quat);
+    else if (!inXR) {
+      camera.rotation.set(THREE.MathUtils.degToRad(lat), THREE.MathUtils.degToRad(-lon), 0, 'YXZ');
+    }
+    sampleHands(t);
+    ledMats.forEach((tx) => { tx.offset.x = t / 22000; });
+
+    if (juego.estado === 'playing') {
+      juego.resta -= dt;
+      if (juego.resta <= 0) { juego.resta = 0; terminar(); }
+      // dificultad progresiva
+      juego.spawnCada = Math.max(0.9, 2.2 - (60 - juego.resta) * 0.022);
+      juego.velocidad = 4 + (60 - juego.resta) * 0.05;
+      juego.sinceSpawn += dt;
+      if (juego.sinceSpawn >= juego.spawnCada) { juego.sinceSpawn = 0; crearBalon(); }
+      elTiempo.textContent = Math.ceil(juego.resta);
+      if ((mvr.stereo || inXR)) pintarHudVR();
+      tickGaze(dt);
+      tickManos();
+    }
+
+    const PISO_BALON = -1.05; // centro del balón cuando descansa en el piso (radio 0.45)
+    for (let i = balones.length - 1; i >= 0; i--) {
+      const b = balones[i];
+      if (b.suelo) {
+        // despeje del portero: parabólica con gravedad, rebotes y rodadura
+        const s = b.suelo;
+        s.vel.y -= 14 * dt;
+        b.m.position.addScaledVector(s.vel, dt);
+        b.m.rotation.z -= s.vel.x * dt * 1.6; // rueda según avanza
+        b.m.rotation.x += s.vel.z * dt * 1.6;
+        if (b.m.position.y <= PISO_BALON) {
+          b.m.position.y = PISO_BALON;
+          if (Math.abs(s.vel.y) > 1.2) {
+            s.vel.y = -s.vel.y * 0.45;          // rebote con pérdida
+            s.vel.x *= 0.82; s.vel.z *= 0.82;
+            beep(220, 160, 0.05, 'sine', 0.06); // toque contra la duela
+          } else {
+            s.vel.y = 0;                         // rodando
+            s.vel.x *= 0.985; s.vel.z *= 0.985;  // fricción
+          }
+        }
+        // en reposo: el balón se queda un momento en la cancha y luego se retira
+        if (b.m.position.y <= PISO_BALON + 0.01 && s.vel.lengthSq() < 0.15) s.reposo += dt;
+        if (s.reposo > 2.2) {
+          b.m.scale.multiplyScalar(1 - dt * 3);
+          if (b.m.scale.x < 0.05) { scene.remove(b.m); balones.splice(i, 1); }
+        }
+        // seguridad: fuera de la cancha se retira
+        if (Math.abs(b.m.position.x) > 15.5 || Math.abs(b.m.position.z) > 10.5) { scene.remove(b.m); balones.splice(i, 1); }
+        continue;
+      }
+      b.m.rotation.x += b.spin.x * dt * 3;
+      b.m.rotation.y += b.spin.y * dt * 3;
+      if (b.fuera !== undefined) {
+        // gol: cruza la línea y se desvanece dentro del arco
+        b.fuera += dt;
+        b.m.position.addScaledVector(b.dir, dt * 26);
+        b.m.scale.multiplyScalar(1 - dt * 2.2);
+        if (b.fuera > 0.5) { scene.remove(b.m); balones.splice(i, 1); }
+        continue;
+      }
+      b.m.position.addScaledVector(b.dir, dt * juego.velocidad * (b.dorado ? 1.25 : 1));
+      // gol = el balón cruza la línea (aunque no te toque a ti)
+      if (juego.estado === 'playing' && b.m.position.x > LINEA_GOL) gol(b);
+      else if (b.m.position.distanceTo(rig.position) > 34) { scene.remove(b.m); balones.splice(i, 1); }
+    }
+
+    if (mvr.on && mvr.stereo && !inXR) {
+      camera.updateMatrixWorld();
+      stereoCam.update(camera);
+      const w = innerWidth, h = innerHeight;
+      renderer.setScissorTest(true);
+      renderer.setScissor(0, 0, w / 2, h);
+      renderer.setViewport(0, 0, w / 2, h);
+      renderer.render(scene, stereoCam.cameraL);
+      renderer.setScissor(w / 2, 0, w / 2, h);
+      renderer.setViewport(w / 2, 0, w / 2, h);
+      renderer.render(scene, stereoCam.cameraR);
+      renderer.setScissorTest(false);
+    } else {
+      renderer.render(scene, camera);
+    }
+  });
+  // en XR real el HUD y la retícula también aplican
+  renderer.xr.addEventListener('sessionstart', () => { hudVR.visible = true; reticula.visible = true; pintarHudVR(); });
+  renderer.xr.addEventListener('sessionend', () => { hudVR.visible = false; reticula.visible = false; });
+
+  addEventListener('resize', () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+
+  // gancho de verificación e2e (no afecta el juego)
+  window.__golazo = { juego, balones, camera, atajar, crearBalon };
+</script>
+</body>
+</html>

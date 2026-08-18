@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Persistencia Digital — Experiencias inmersivas</title>
+<link rel="icon" type="image/webp" href="assets/isotipo.webp" />
+<meta name="description" content="El catálogo de Persistencia Digital, en vivo: realidad aumentada, mapping, VR, videojuegos, activaciones e instalaciones interactivas corriendo en tu navegador." />
+<!-- seo-preciso -->
+<link rel="canonical" href="https://persistenciadigital.com/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Persistencia Digital" />
+<meta property="og:title" content="Persistencia Digital — Experiencias inmersivas" />
+<meta property="og:description" content="El catálogo de Persistencia Digital, en vivo: realidad aumentada, mapping, VR, videojuegos, activaciones e instalaciones interactivas corriendo en tu navegador." />
+<meta property="og:url" content="https://persistenciadigital.com/" />
+<meta property="og:image" content="https://persistenciadigital.com/assets/og/index.jpg" />
+<meta property="og:image:secure_url" content="https://persistenciadigital.com/assets/og/index.jpg" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="1080" />
+<meta property="og:image:height" content="1080" />
+<meta property="og:locale" content="es_CO" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Persistencia Digital — Experiencias inmersivas" />
+<meta name="twitter:description" content="El catálogo de Persistencia Digital, en vivo: realidad aumentada, mapping, VR, videojuegos, activaciones e instalaciones interactivas corriendo en tu navegador." />
+<meta name="twitter:image" content="https://persistenciadigital.com/assets/og/index.jpg" />
+<!-- /seo-preciso -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* marca */
+    --cyan: #4deeea;
+    --blue: #3d5afe;
+    --purple: #7b4de0;
+    --magenta: #d94de8;
+    --grad: linear-gradient(90deg, var(--cyan), var(--blue) 38%, var(--purple) 68%, var(--magenta) 100%);
+
+    /* superficies */
+    --bg: #060609;
+    --bg-elev: #0c0c14;
+    --surface: rgba(255,255,255,0.035);
+    --border: rgba(255,255,255,0.10);
+    --border-strong: rgba(255,255,255,0.18);
+
+    /* texto (contraste AA verificado sobre --bg) */
+    --fg: #f4f5fa;
+    --fg-muted: #a8adc0;
+    --fg-dim: #6f7488;
+
+    /* ritmo 8px */
+    --s1: 8px; --s2: 16px; --s3: 24px; --s4: 32px; --s5: 48px; --s6: 64px; --s7: 96px; --s8: 128px;
+    --radius: 20px;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  html { scroll-behavior: smooth; overflow-x: clip; -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  img { max-width: 100%; display: block; }
+  ::selection { background: rgba(77,238,234,0.28); }
+  :focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; border-radius: 6px; }
+
+  .wrap { width: min(1200px, 100% - var(--s4)); margin-inline: auto; }
+
+  /* ---------- barra de marca + nav ---------- */
+  .brand-bar { position: fixed; inset: 0 0 auto 0; height: 3px; background: var(--grad); z-index: 100; }
+
+  nav {
+    position: fixed; top: 3px; left: 0; right: 0; z-index: 90;
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    background: rgba(6,6,9,0.72); border-bottom: 1px solid transparent;
+    transition: border-color 0.3s var(--ease), background 0.3s var(--ease);
+  }
+  nav.scrolled { border-bottom-color: var(--border); background: rgba(6,6,9,0.9); }
+  .nav-in { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; letter-spacing: 0.02em; min-height: 44px; }
+  .logo img { width: 30px; height: 30px; object-fit: contain; }
+  .logo span { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800; }
+  .nav-links { display: flex; align-items: center; gap: var(--s3); }
+  .nav-links a { color: var(--fg-muted); font-size: 14.5px; font-weight: 500; transition: color 0.2s var(--ease); padding: 12px 4px; min-height: 44px; display: inline-flex; align-items: center; }
+  .nav-links a:hover { color: var(--fg); }
+  .nav-cta {
+    border: 1px solid var(--border-strong); border-radius: 999px; padding: 10px 20px;
+    font-size: 14px; font-weight: 600; color: var(--fg) !important;
+    min-height: 44px; display: inline-flex; align-items: center;
+    transition: border-color 0.2s var(--ease), background 0.2s var(--ease), transform 0.2s var(--ease);
+  }
+  .nav-cta:hover { border-color: var(--cyan); background: rgba(77,238,234,0.08); transform: translateY(-1px); }
+  @media (max-width: 720px) { .nav-links .hide-sm { display: none; } }
+
+  /* ---------- menú: desplegable de servicios ---------- */
+  .nav-desplegable { position: relative; }
+  .nav-disparador { display: inline-flex; align-items: center; gap: 6px; }
+  .nav-disparador svg { width: 13px; height: 13px; transition: transform 0.25s var(--ease); }
+  .nav-desplegable:hover .nav-disparador svg,
+  .nav-desplegable:focus-within .nav-disparador svg { transform: rotate(180deg); }
+  .nav-panel {
+    position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%) translateY(-8px);
+    width: 560px; padding: 14px; border-radius: var(--radius);
+    background: rgba(8, 8, 14, 0.92); border: 1px solid var(--border-strong);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(77,238,234,0.06);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity 0.22s var(--ease), transform 0.22s var(--ease), visibility 0.22s;
+  }
+  .nav-desplegable:hover .nav-panel,
+  .nav-desplegable:focus-within .nav-panel {
+    opacity: 1; visibility: visible; pointer-events: auto; transform: translateX(-50%) translateY(0);
+  }
+  .nav-panel a {
+    text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 11px 14px; border-radius: 12px;
+    transition: background 0.18s var(--ease);
+  }
+  .nav-panel a:hover { background: rgba(77,238,234,0.07); }
+  .nav-panel b { font-size: 14px; font-weight: 650; color: var(--fg); }
+  .nav-panel span { font-size: 12px; color: var(--fg-dim); }
+
+  /* CTA con más presencia */
+  .nav-cta { background: var(--grad); border: none; color: #06060c !important; font-weight: 700; }
+  .nav-cta:hover { filter: brightness(1.12); transform: translateY(-1px); background: var(--grad); }
+
+  /* hamburguesa (solo móvil) */
+  .nav-burger {
+    display: none; width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border);
+    background: var(--surface); cursor: pointer; flex-direction: column;
+    align-items: center; justify-content: center; gap: 5px;
+  }
+  .nav-burger i { width: 18px; height: 2px; background: var(--fg); border-radius: 2px; transition: transform 0.3s var(--ease), opacity 0.2s; }
+  .nav-burger.abierto i:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-burger.abierto i:nth-child(2) { opacity: 0; }
+  .nav-burger.abierto i:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .menu-movil {
+    position: fixed; inset: 71px 0 0 0; z-index: 80; padding: var(--s3) var(--s3) var(--s5);
+    background: rgba(6,6,9,0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    display: none; flex-direction: column; gap: var(--s2); overflow-y: auto;
+  }
+  .menu-movil.abierto { display: flex; }
+  .menu-movil-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+    background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 4px; display: block;
+  }
+  .menu-movil-grupo { display: flex; flex-direction: column; gap: 2px; padding-bottom: var(--s2); border-bottom: 1px solid var(--border); }
+  .menu-movil-grupo a { display: flex; flex-direction: column; gap: 1px; padding: 12px 10px; border-radius: 12px; min-height: 44px; }
+  .menu-movil-grupo a:active { background: rgba(77,238,234,0.08); }
+  .menu-movil-grupo b { font-size: 16px; font-weight: 650; }
+  .menu-movil-grupo span { font-size: 12.5px; color: var(--fg-dim); }
+  .menu-movil-directo { padding: 14px 10px; font-size: 16px; font-weight: 600; color: var(--fg-muted); min-height: 44px; }
+  .menu-movil .btn { justify-content: center; margin-top: var(--s2); }
+  @media (max-width: 720px) { .nav-burger { display: flex; } .nav-links .nav-cta { display: none; } }
+
+
+  /* ---------- hero ---------- */
+  header.hero {
+    position: relative; min-height: min(92vh, 820px);
+    display: flex; flex-direction: column; justify-content: center;
+    padding: calc(68px + var(--s7)) 0 var(--s6);
+    overflow: hidden;
+  }
+  .hero-glow {
+    position: absolute; inset: -20% -10% auto -10%; height: 70%; pointer-events: none;
+    background:
+      radial-gradient(50% 60% at 22% 40%, rgba(61,90,254,0.20), transparent 70%),
+      radial-gradient(45% 55% at 78% 30%, rgba(217,77,232,0.16), transparent 70%),
+      radial-gradient(40% 50% at 50% 65%, rgba(77,238,234,0.12), transparent 70%);
+    filter: blur(20px);
+  }
+  #stars { position: absolute; inset: 0; pointer-events: none; opacity: 0.9; }
+  .hero-in { position: relative; z-index: 2; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    border: 1px solid var(--border); border-radius: 999px; padding: 7px 16px 7px 12px;
+    font-size: 12.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--fg-muted); background: var(--surface); margin-bottom: var(--s3);
+  }
+  .eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--grad); flex-shrink: 0; }
+  h1 {
+    font-size: clamp(38px, 7.2vw, 84px); line-height: 1.03; letter-spacing: -0.035em;
+    font-weight: 800; max-width: 15ch;
+  }
+  h1 em {
+    font-style: normal; background: var(--grad);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p.lead {
+    margin-top: var(--s3); max-width: 58ch;
+    font-size: clamp(16px, 1.9vw, 20px); color: var(--fg-muted); font-weight: 400;
+  }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s5); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px; min-height: 52px;
+    padding: 15px 28px; border-radius: 999px; font-size: 15.5px; font-weight: 650;
+    cursor: pointer; border: 1px solid transparent; font-family: inherit;
+    transition: transform 0.2s var(--ease), filter 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
+  }
+  .btn-primary { background: var(--grad); color: #06060c; font-weight: 700; }
+  .btn-primary:hover { transform: translateY(-2px); filter: brightness(1.1); }
+  .btn-ghost { border-color: var(--border-strong); color: var(--fg); }
+  .btn-ghost:hover { border-color: var(--cyan); background: rgba(77,238,234,0.07); transform: translateY(-2px); }
+  .btn svg { width: 17px; height: 17px; }
+
+  /* marquee de capacidades */
+  .marquee {
+    position: relative; margin-top: var(--s6); border-block: 1px solid var(--border);
+    padding: 14px 0; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+  .marquee-track { display: flex; gap: var(--s5); width: max-content; animation: slide 32s linear infinite; }
+  .marquee-track span {
+    display: inline-flex; align-items: center; gap: 12px; white-space: nowrap;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-dim);
+  }
+  .marquee-track span::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--grad); }
+  @keyframes slide { to { transform: translateX(-50%); } }
+
+  /* ---------- secciones ---------- */
+  section { padding: var(--s8) 0; }
+  .sec-head { max-width: 62ch; margin-bottom: var(--s5); }
+  .sec-label {
+    font-size: 12.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+    background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: var(--s2); display: block;
+  }
+  h2 { font-size: clamp(28px, 4vw, 46px); line-height: 1.12; letter-spacing: -0.028em; font-weight: 750; }
+  .sec-head p { margin-top: var(--s2); color: var(--fg-muted); font-size: clamp(15px, 1.6vw, 17.5px); }
+
+  /* ---------- grupos de servicio ---------- */
+  .servicio { margin-bottom: var(--s6); }
+  .servicio:last-child { margin-bottom: 0; }
+  .servicio-head {
+    display: flex; align-items: baseline; gap: var(--s3); flex-wrap: wrap;
+    padding-bottom: var(--s2); margin-bottom: var(--s3);
+    border-bottom: 1px solid var(--border);
+  }
+  .servicio-head h3 {
+    font-size: clamp(19px, 2.4vw, 26px); font-weight: 750; letter-spacing: -0.02em;
+    background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+    white-space: nowrap;
+  }
+  .servicio-head p { color: var(--fg-dim); font-size: 14.5px; max-width: 58ch; }
+  .card.ancha { grid-column: span 12; display: grid; grid-template-columns: 1.15fr 1fr; }
+  .card.ancha .card-media { aspect-ratio: auto; height: 100%; min-height: 260px; }
+  @media (max-width: 860px) { .card.ancha { grid-template-columns: 1fr; } .card.ancha .card-media { aspect-ratio: 16 / 10; height: auto; } }
+
+  /* ---------- grid de experiencias ---------- */
+  .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--s3); }
+  .card {
+    position: relative; grid-column: span 4; border-radius: var(--radius); overflow: hidden;
+    background: var(--bg-elev); border: 1px solid var(--border); isolation: isolate;
+    transition: transform 0.35s var(--ease), border-color 0.35s var(--ease), box-shadow 0.35s var(--ease);
+    display: flex; flex-direction: column;
+  }
+  .card.feature { grid-column: span 6; }
+  .card:hover { transform: translateY(-6px); border-color: var(--border-strong); box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(77,238,234,0.14); }
+  .card:hover .card-media img { transform: scale(1.06); }
+  .card:hover .go { background: var(--grad); color: #06060c; border-color: transparent; }
+  .card-media { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: #0a0a12; }
+  .card.feature .card-media { aspect-ratio: 16 / 9; }
+  .card-media img { width: 100%; height: 100%; object-fit: cover; opacity: 0.82; transition: transform 0.55s var(--ease), opacity 0.35s var(--ease); }
+  .card:hover .card-media img { opacity: 1; }
+  .card-media::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 35%, rgba(6,6,9,0.86) 100%);
+  }
+  .card-body { padding: var(--s3); display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
+    font-size: 11.5px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--fg-muted);
+    border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px 5px 9px; background: var(--surface);
+  }
+  .tag i { width: 6px; height: 6px; border-radius: 50%; background: var(--grad); }
+  .card h3 { font-size: clamp(19px, 2.1vw, 23px); font-weight: 700; letter-spacing: -0.015em; line-height: 1.25; }
+  .card p { color: var(--fg-muted); font-size: 14.5px; flex: 1; }
+  .go {
+    display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; margin-top: 4px;
+    min-height: 44px; padding: 11px 18px; border-radius: 999px; border: 1px solid var(--border-strong);
+    font-size: 14px; font-weight: 650; color: var(--fg);
+    transition: background 0.25s var(--ease), color 0.25s var(--ease), border-color 0.25s var(--ease);
+  }
+  .go svg { width: 15px; height: 15px; }
+  @media (max-width: 1024px) { .card, .card.feature { grid-column: span 6; } }
+  @media (max-width: 680px) { .card, .card.feature { grid-column: span 12; } }
+
+  /* ---------- capacidades ---------- */
+  .caps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s3); }
+  .cap {
+    border: 1px solid var(--border); border-radius: var(--radius); padding: var(--s3);
+    background: var(--surface); transition: border-color 0.3s var(--ease), transform 0.3s var(--ease);
+  }
+  .cap:hover { border-color: var(--border-strong); transform: translateY(-3px); }
+  .cap-icon {
+    width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; margin-bottom: var(--s2);
+    background: linear-gradient(135deg, rgba(77,238,234,0.14), rgba(217,77,232,0.14));
+    border: 1px solid var(--border);
+  }
+  .cap-icon svg { width: 21px; height: 21px; stroke: var(--cyan); fill: none; stroke-width: 1.7; }
+  .cap h3 { font-size: 16.5px; font-weight: 650; margin-bottom: 6px; letter-spacing: -0.01em; }
+  .cap p { color: var(--fg-muted); font-size: 14.5px; }
+
+  /* ---------- cierre ---------- */
+  .cta-box {
+    position: relative; border: 1px solid var(--border); border-radius: 28px; overflow: hidden;
+    padding: clamp(var(--s5), 7vw, var(--s7)) var(--s4); text-align: center; background: var(--bg-elev);
+  }
+  .cta-box::before {
+    content: ''; position: absolute; inset: -60% -20% auto -20%; height: 160%; pointer-events: none;
+    background: radial-gradient(45% 50% at 50% 30%, rgba(123,77,224,0.20), transparent 70%);
+  }
+  .cta-box > * { position: relative; }
+  .cta-box h2 { max-width: 18ch; margin-inline: auto; }
+  .cta-box p { color: var(--fg-muted); margin: var(--s2) auto 0; max-width: 52ch; }
+  .cta-box .btn { margin-top: var(--s4); }
+
+  footer { border-top: 1px solid var(--border); padding: var(--s5) 0; }
+  .foot-in { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); align-items: center; justify-content: space-between; color: var(--fg-dim); font-size: 14px; }
+  .foot-in a { color: var(--fg-muted); transition: color 0.2s var(--ease); min-height: 44px; display: inline-flex; align-items: center; }
+  .foot-in a:hover { color: var(--fg); }
+
+  /* ---------- entrada al hacer scroll ---------- */
+  .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* ---------- movimiento por scroll (capas a distinta velocidad) ---------- */
+  #stars, .hero-glow, .hero-in, .marquee { will-change: transform; }
+  /* progreso de lectura con el degradado de marca */
+  .progreso {
+    position: fixed; top: 0; left: 0; height: 3px; width: 100%; z-index: 101;
+    background: var(--grad); transform-origin: 0 50%; transform: scaleX(0);
+  }
+  /* haz de proyector que barre la sección de experiencias */
+  .haz {
+    position: absolute; top: 0; left: 50%; width: 140%; height: 100%;
+    transform: translateX(-50%); pointer-events: none; z-index: 0; overflow: hidden;
+  }
+  .haz i {
+    position: absolute; top: -20%; left: var(--x, 20%); width: 42%; height: 140%;
+    background: linear-gradient(90deg, transparent, rgba(77,238,234,0.055) 45%, rgba(217,77,232,0.05) 55%, transparent);
+    filter: blur(38px); transform: skewX(-14deg);
+  }
+  #catalogo { position: relative; overflow: clip; }
+  #catalogo .wrap { position: relative; z-index: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    .reveal { opacity: 1; transform: none; }
+  }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "name": "Persistencia Digital",
+      "url": "https://persistenciadigital.com",
+      "logo": "https://persistenciadigital.com/assets/isotipo.webp",
+      "sameAs": ["https://www.instagram.com/digitalpersistencia/"],
+      "address": { "@type": "PostalAddress", "addressLocality": "Barranquilla", "addressCountry": "CO" }
+    },
+    {
+      "@type": "WebSite",
+      "name": "Persistencia Digital — Catálogo en vivo",
+      "url": "https://persistenciadigital.com"
+    }
+  ]
+}
+</script>
+<script defer src="assets/medicion.js"></script>
+</head>
+<body>
+<div class="brand-bar"></div>
+<div class="progreso" id="progreso" aria-hidden="true"></div>
+
+<nav id="nav">
+  <div class="wrap nav-in">
+    <a class="logo" href="#top">
+      <img src="assets/isotipo.webp" alt="" width="30" height="30" />
+      PERSISTENCIA <span>DIGITAL</span>
+    </a>
+    <div class="nav-links">
+      <div class="nav-desplegable hide-sm">
+        <a href="#catalogo" class="nav-disparador">Catálogo
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </a>
+        <div class="nav-panel">
+          <a href="#s-ar"><b>Realidad aumentada</b><span>Tu marca sobre el mundo real</span></a>
+          <a href="#s-vr"><b>Inmersión 360 y VR</b><span>Salones que se transforman</span></a>
+          <a href="#s-mapping"><b>Video mapping</b><span>Luz sobre arquitectura real</span></a>
+          <a href="#s-cgi"><b>Video CGI</b><span>Tu marca del tamaño de la ciudad</span></a>
+          <a href="#s-avatares"><b>Avatares IA</b><span>Un personaje, infinitas historias</span></a>
+          <a href="#s-juegos"><b>VR interactivo</b><span>La gente compite y vuelve</span></a>
+          <a href="#s-activaciones"><b>Activaciones de marca</b><span>Tu stand de feria, con juego</span></a>
+          <a href="#s-interactivas"><b>Instalaciones interactivas</b><span>Pantallas que te ven</span></a>
+          <a href="#s-web"><b>Desarrollo web</b><span>Landings con 3D real</span></a>
+        </div>
+      </div>
+      <a class="hide-sm" href="#capacidades">Qué hacemos</a>
+      <a class="nav-cta" href="#contacto">Hablemos</a>
+      <button class="nav-burger" id="burger" type="button" aria-label="Abrir el menú" aria-expanded="false">
+        <i></i><i></i><i></i>
+      </button>
+    </div>
+  </div>
+</nav>
+<div class="menu-movil" id="menu-movil">
+  <div class="menu-movil-grupo">
+    <span class="menu-movil-label">El catálogo, en vivo</span>
+          <a href="#s-ar"><b>Realidad aumentada</b><span>Tu marca sobre el mundo real</span></a>
+          <a href="#s-vr"><b>Inmersión 360 y VR</b><span>Salones que se transforman</span></a>
+          <a href="#s-mapping"><b>Video mapping</b><span>Luz sobre arquitectura real</span></a>
+          <a href="#s-cgi"><b>Video CGI</b><span>Tu marca del tamaño de la ciudad</span></a>
+          <a href="#s-avatares"><b>Avatares IA</b><span>Un personaje, infinitas historias</span></a>
+          <a href="#s-juegos"><b>VR interactivo</b><span>La gente compite y vuelve</span></a>
+          <a href="#s-activaciones"><b>Activaciones de marca</b><span>Tu stand de feria, con juego</span></a>
+          <a href="#s-interactivas"><b>Instalaciones interactivas</b><span>Pantallas que te ven</span></a>
+          <a href="#s-web"><b>Desarrollo web</b><span>Landings con 3D real</span></a>
+  </div>
+  <a class="menu-movil-directo" href="#capacidades">Qué hacemos</a>
+  <a class="menu-movil-directo" href="https://www.instagram.com/digitalpersistencia/" target="_blank" rel="noopener">@digitalpersistencia</a>
+  <a class="btn btn-primary" href="#contacto">Hablemos</a>
+</div>
+
+<header class="hero" id="top">
+  <div class="hero-glow"></div>
+  <svg id="stars" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+  <div class="wrap hero-in">
+    <span class="eyebrow"><span class="dot"></span>Barranquilla · Colombia</span>
+    <h1>No te contamos lo que hacemos. <em>Entra y vívelo.</em></h1>
+    <p class="lead">
+      Realidad aumentada, mapping y VR corriendo en tu navegador — sin apps, sin instalar nada.
+      Este es nuestro catálogo de servicios convertido en experiencias: la misma tecnología que llevamos a eventos, lanzamientos y activaciones de marca, corriendo en vivo para que la pruebes.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#catalogo">
+        Probar el catálogo
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <a class="btn btn-ghost" href="https://wa.me/573207333874?text=Hola%21%20Vengo%20de%20persistenciadigital.com%20y%20quiero%20una%20experiencia%20para%20mi%20evento." target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9.2 8.4 8.6 8.6 0 0 1-3.7-.9L3 20l1-4.9a8.4 8.4 0 1 1 17-3.6z"/></svg>
+        Escríbenos por WhatsApp
+      </a>
+    </div>
+  </div>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track" id="marquee"></div>
+  </div>
+</header>
+
+<main>
+  <section id="catalogo">
+    <div class="haz" aria-hidden="true"><i id="haz"></i></div>
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="sec-label">El catálogo, en vivo</span>
+        <h2>Nuestros servicios no se leen. Se prueban.</h2>
+        <p>Cada servicio del catálogo tiene su demostración corriendo en el navegador. Ábrelas en tu computador, escanea el código con el celular y compruébalo tú mismo — sin instalar nada.</p>
+      </div>
+
+      <div class="servicio reveal" id="s-ar">
+        <div class="servicio-head">
+          <h3>Realidad aumentada</h3>
+          <p>Tu marca montada sobre el mundo real, desde la cámara de cualquier celular. Tres íconos de Barranquilla lo demuestran.</p>
+        </div>
+        <div class="grid">
+<a class="card reveal" href="ar.html">
+          <div class="card-media">
+            <img src="assets/estadio-bg.jpg?v=3" alt="Estadio Metropolitano de Barranquilla" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="tag"><i></i>AR · Fútbol</span>
+            <h3>El Metropolitano</h3>
+            <p>Apunta al estadio y el balón revienta la pantalla mientras la tribuna se levanta en 3D.</p>
+            <span class="go">Abrir experiencia <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+
+<a class="card reveal" href="ar-carnaval.html">
+          <div class="card-media">
+            <img src="assets/carnaval-bg.jpg?v=3" alt="Comparsa del Carnaval de Barranquilla" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="tag"><i></i>AR · Fiesta</span>
+            <h3>Carnaval de Barranquilla</h3>
+            <p>La Marimonda sale bailando de la foto y se queda contigo, en tu propio espacio.</p>
+            <span class="go">Abrir experiencia <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+
+<a class="card reveal" href="ar-ventana.html">
+          <div class="card-media">
+            <img src="assets/ventana-bg.jpg?v=3" alt="Monumento Ventana al Mundo de Barranquilla" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="tag"><i></i>AR · Ciudad</span>
+            <h3>Ventana al Mundo</h3>
+            <p>El monumento emerge en 3D desde la pantalla y gira cuando lo tocas.</p>
+            <span class="go">Abrir experiencia <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+        </div>
+      </div>
+      <div class="servicio reveal" id="s-vr">
+        <div class="servicio-head">
+          <h3>Inmersión 360 y VR</h3>
+          <p>Salones de evento que se transforman en cualquier lugar: pantallas envolventes, gafas VR y control con las manos.</p>
+        </div>
+        <div class="grid">
+<a class="card ancha reveal" href="cubo.html">
+          <div class="card-media">
+            <img src="assets/pano-acuario.jpg?v=4" alt="Proyección inmersiva de un acuario dentro del cubo" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="tag"><i></i>Mapping inmersivo · VR</span>
+            <h3>Entra al cubo</h3>
+            <p>Camina dentro de la proyección 360, mueve las manos frente a la cámara y la escena reacciona. Con modo VR para gafas y para celular.</p>
+            <span class="go">Abrir experiencia <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+        </div>
+      </div>
+      <div class="servicio reveal" id="s-mapping">
+        <div class="servicio-head">
+          <h3>Video mapping</h3>
+          <p>Shows de luz proyectados sobre arquitectura y objetos reales — coreografiados a la medida de cada superficie.</p>
+        </div>
+        <div class="grid">
+<a class="card ancha reveal" href="fachada.html">
+          <div class="card-media">
+            <img src="assets/mapping-vitrales.jpg" alt="Show de mapping proyectado sobre una fachada 3D" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="tag"><i></i>Video mapping 3D</span>
+            <h3>Mapping sobre fachada real</h3>
+            <p>Un show completo proyectado sobre modelos 3D reales: basílica, casa colonial y carro de lanzamiento, con nueve contenidos distintos.</p>
+            <span class="go">Abrir experiencia <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+        </div>
+      </div>
+      <div class="servicio reveal" id="s-cgi">
+        <div class="servicio-head">
+          <h3>Video CGI de marca</h3>
+          <p>Tu marca del tamaño de la ciudad: piezas CGI sobre sitios emblemáticos reales, el formato viral que detiene el scroll.</p>
+        </div>
+        <div class="grid">
+<a class="card ancha reveal" href="cgi.html">
+          <div class="card-media">
+            <img src="cgi/luna-poster.jpg" alt="Marimonda gigante soplando la Luna del Río convertida en anillos de luz" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="tag"><i></i>Video CGI · Sitios emblemáticos</span>
+            <h3>La ciudad como lienzo</h3>
+            <p>Una marimonda gigante sopla la Luna del Río y un helicóptero instala la marca sobre la catedral. Sitios reales, imposibles reales — listos para pauta y redes.</p>
+            <span class="go">Ver las piezas <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+        </div>
+      </div>
+      <div class="servicio reveal" id="s-avatares">
+        <div class="servicio-head">
+          <h3>Avatares consistentes</h3>
+          <p>El personaje de tu marca, creado con IA y mantenido idéntico en cualquier escena: un actor que nunca envejece y siempre está disponible.</p>
+        </div>
+        <div class="grid">
+<a class="card ancha reveal" href="avatares.html">
+          <div class="card-media">
+            <img src="avatares/accion-poster.jpg" alt="El personaje de Persistencia saltando entre azoteas de noche perseguido por drones" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="tag"><i></i>Avatares IA · Producción audiovisual</span>
+            <h3>Un personaje, infinitas historias</h3>
+            <p>Nuestro avatar protagoniza una persecución de película: drones, azoteas y un salto al vacío. El mismo personaje de nuestra publicidad, en otro género — esa es la consistencia que vendemos.</p>
+            <span class="go">Ver el servicio <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+        </div>
+      </div>
+      <div class="servicio reveal" id="s-juegos">
+        <div class="servicio-head">
+          <h3>VR interactivo</h3>
+          <p>Experiencias VR interactivas hechas a la medida: la gente compite, deja su puntaje y vuelve por más.</p>
+        </div>
+        <div class="grid">
+<a class="card feature reveal" href="juego.html">
+          <div class="card-media">
+            <img src="assets/juego-bg.jpg" alt="Balones volando hacia el jugador en la arena cósmica de Golazo VR" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="tag"><i></i>VR interactivo</span>
+            <h3>Golazo VR</h3>
+            <p>Ataja los balones que te vuelan encima en 360: con el mouse, girando el celular, con la mirada en gafas VR o dándoles palmadas con tus manos frente a la cámara.</p>
+            <span class="go">Jugar ahora <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+
+<a class="card feature reveal" href="ritmo.html">
+          <div class="card-media">
+            <img src="assets/ritmo-bg.jpg" alt="Túnel infinito de anillos de neón con las notas del juego de ritmo acercándose" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="tag"><i></i>VR interactivo · Ritmo</span>
+            <h3>Túnel del Ritmo</h3>
+            <p>Un túnel infinito de neón donde las notas llegan al beat de la música. Golpéalas en el momento exacto — con el dedo, la mirada en gafas VR o tus manos en el aire.</p>
+            <span class="go">Jugar ahora <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+        </div>
+      </div>
+      <div class="servicio reveal" id="s-activaciones">
+        <div class="servicio-head">
+          <h3>Activaciones de marca</h3>
+          <p>La experiencia para tu stand de feria: el visitante juega con tu producto, entra al ranking y te deja sus datos.</p>
+        </div>
+        <div class="grid">
+<a class="card ancha reveal" href="feria.html">
+          <div class="card-media">
+            <img src="assets/feria-bg.jpg" alt="Cajas de regalo de la marca cayendo dentro del stand virtual de Lluvia de Premios" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="tag"><i></i>Activación de marca · Ferias</span>
+            <h3>Lluvia de Premios</h3>
+            <p>La activación para tu stand: los premios de la marca caen del cielo y el visitante los atrapa con sus manos. Con ranking de la feria y captura de datos para tu equipo comercial.</p>
+            <span class="go">Jugar ahora <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+<a class="card ancha reveal" href="grito.html">
+          <div class="card-media">
+            <img src="assets/grito-bg.jpg" alt="Medidor del Gritómetro estallando en partículas de colores de marca" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="tag"><i></i>Activación de marca · Con la voz</span>
+            <h3>El Gritómetro</h3>
+            <p>El público grita y la pantalla estalla: aguja gigante, explosiones de partículas, ranking del stand y captura de datos. El show lo hace la gente.</p>
+            <span class="go">Probar el Gritómetro <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+<a class="card ancha reveal" href="portal.html">
+          <div class="card-media">
+            <img src="assets/portal-bg.jpg" alt="Foto enmarcada con el degradado de marca dentro del mundo galaxia" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="tag"><i></i>Activación de marca · Fotocabina</span>
+            <h3>El Portal</h3>
+            <p>La cámara recorta al visitante en vivo y lo mete dentro de mundos imposibles: acuario, faroles o galaxia. Se lleva la foto con tu marca y la publica solo.</p>
+            <span class="go">Cruzar el portal <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+        </div>
+      </div>
+      <div class="servicio reveal" id="s-interactivas">
+        <div class="servicio-head">
+          <h3>Instalaciones interactivas</h3>
+          <p>Pantallas que ven al público y responden: cuerpo, manos y movimiento como control, sin sensores especiales.</p>
+        </div>
+        <div class="grid">
+<a class="card ancha reveal" href="kinect.html">
+          <div class="card-media">
+            <img src="assets/kinect-bg.png" alt="Partículas de luz siguiendo el movimiento del cuerpo en el Espejo Mágico" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="tag"><i></i>Instalación interactiva · Cámara en vivo</span>
+            <h3>Espejo Mágico</h3>
+            <p>La cámara te ve y el espejo responde: polvo de estrellas que sigue tu cuerpo, tu esqueleto en neón con estelas, y pinceles de luz en tus manos. Estilo Kinect, sin sensores.</p>
+            <span class="go">Probar ahora <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+        </div>
+      </div>
+      <div class="servicio reveal" id="s-web">
+        <div class="servicio-head">
+          <h3>Desarrollo web</h3>
+          <p>Sitios y landings con 3D real: el visitante recorre tu producto con el scroll, como en las webs premiadas.</p>
+        </div>
+        <div class="grid">
+<a class="card ancha reveal" href="landing/">
+          <div class="card-media">
+            <img src="assets/landing-bg.jpg" alt="Porsche clásico en 3D sobre el anillo de marca de la landing Producto 360" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="tag"><i></i>Landing 3D · Desarrollo web</span>
+            <h3>Producto 360</h3>
+            <p>Una landing donde el visitante recorre el producto en 3D con el scroll: cinco paradas de cámara coreografiadas. Se viste con el producto de tu marca.</p>
+            <span class="go">Ver la landing <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+<a class="card ancha reveal" href="landing-camaleon/">
+          <div class="card-media">
+            <img src="assets/camaleon-bg.jpg" alt="Camaleón con gafas VR sobre fondo magenta, héroe de la landing con personaje" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <span class="tag"><i></i>Landing con personaje · Desarrollo web</span>
+            <h3>Camaleón</h3>
+            <p>Una landing con mascota generada por IA que cambia de piel: toca un color y toda la página se adapta a la marca, como un camaleón. Personaje único para cada cliente.</p>
+            <span class="go">Ver la landing <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="capacidades">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="sec-label">Qué hacemos</span>
+        <h2>Cuatro disciplinas, un mismo equipo</h2>
+        <p>Se combinan según lo que tu proyecto necesite. Lo que acabas de probar salió de las cuatro trabajando juntas.</p>
+      </div>
+      <div class="caps">
+        <div class="cap reveal">
+          <div class="cap-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6 3 12l5 6M16 6l5 6-5 6M13 4l-2 16" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>Desarrollo de software</h3>
+          <p>Plataformas a medida — como este sitio y cada experiencia que acabas de abrir.</p>
+        </div>
+        <div class="cap reveal">
+          <div class="cap-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20V10M9 20V4M15 20v-7M21 20V7" stroke-linecap="round"/></svg></div>
+          <h3>Marketing digital</h3>
+          <p>Crecimiento con datos: contenido, pauta y posicionamiento de marca.</p>
+        </div>
+        <div class="cap reveal">
+          <div class="cap-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="m15.5 10.5 6-3.5v10l-6-3.5z" stroke-linejoin="round"/></svg></div>
+          <h3>Producción audiovisual</h3>
+          <p>Contenido narrativo y motion graphics que conectan con tu audiencia.</p>
+        </div>
+        <div class="cap reveal">
+          <div class="cap-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-3.2a2 2 0 0 1-1.6-.8l-1-1.4a1.5 1.5 0 0 0-2.4 0l-1 1.4a2 2 0 0 1-1.6.8H5a2 2 0 0 1-2-2z" stroke-linejoin="round"/><circle cx="8" cy="11.5" r="1"/><circle cx="16" cy="11.5" r="1"/></svg></div>
+          <h3>Entretenimiento en vivo</h3>
+          <p>Mapping, VR y experiencias inmersivas para eventos — lo que acabas de probar.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="casos">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="sec-label">Confían en nosotros</span>
+        <h2>Proyectos con nombre propio</h2>
+        <p>Marcas reales que ya trabajan con nosotros — y lo que hicimos con cada una.</p>
+      </div>
+      <div class="caps">
+        <div class="cap reveal">
+          <h3>SLM Logistics</h3>
+          <p>Marketing digital: rediseño de su landing y reorganización de su presencia en redes.</p>
+        </div>
+        <div class="cap reveal">
+          <h3>Cocos Club</h3>
+          <p>Desarrollo de software: plataforma digital construida a la medida del club.</p>
+        </div>
+        <div class="cap reveal">
+          <h3>Premios India Catalina</h3>
+          <p>Desarrollo de software para la premiación más importante de la TV colombiana.</p>
+        </div>
+        <div class="cap reveal">
+          <h3>RV Producciones</h3>
+          <p>Nuestra empresa asociada en producción audiovisual y eventos en vivo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="cta-box reveal">
+        <span class="sec-label">Hablemos</span>
+        <h2>¿Qué quieres que la gente sienta en tu evento?</h2>
+        <p>Cuéntanos qué tienes en mente — una activación, un lanzamiento, una fiesta — y te mostramos cómo se vería hecho realidad.</p>
+        <a class="btn btn-primary" href="https://wa.me/573207333874?text=Hola%21%20Vengo%20de%20persistenciadigital.com%20y%20quiero%20una%20experiencia%20para%20mi%20evento." target="_blank" rel="noopener">
+          Escríbenos por WhatsApp
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-in">
+    <span>© <span id="year">2026</span> Persistencia Digital · Barranquilla, Colombia</span>
+    <span><a href="https://persistenciadigital.com">persistenciadigital.com</a> · <a href="https://www.instagram.com/digitalpersistencia/" target="_blank" rel="noopener">@digitalpersistencia</a> · <a href="mailto:digitalpersistencia@gmail.com">digitalpersistencia@gmail.com</a> · Barranquilla, Colombia · <a href="privacidad.html">Datos personales</a></span>
+  </div>
+</footer>
+
+<script>
+  // estrellas de marca (determinista, sin dependencias)
+  (function () {
+    const svg = document.getElementById('stars');
+    const cols = ['#4deeea', '#d94de8', '#ffffff', '#ffffff', '#8b9cff'];
+    let s = 7;
+    const rand = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    let html = '';
+    for (let i = 0; i < 130; i++) {
+      html += '<circle cx="' + (rand() * 100).toFixed(2) + '" cy="' + (rand() * 100).toFixed(2) +
+        '" r="' + ((rand() * 1.1 + 0.25) * 0.11).toFixed(3) + '" fill="' + cols[Math.floor(rand() * 5)] +
+        '" opacity="' + (rand() * 0.5 + 0.12).toFixed(2) + '"/>';
+    }
+    svg.innerHTML = html;
+  })();
+
+  // marquee de capacidades (duplicado para loop continuo)
+  (function () {
+    const items = ['Realidad aumentada', 'Video mapping 3D', 'Realidad virtual', 'Proyección 360', 'Modelado 3D', 'Contenido en vivo', 'Interacción por cámara'];
+    const track = document.getElementById('marquee');
+    track.innerHTML = [...items, ...items].map((t) => '<span>' + t + '</span>').join('');
+  })();
+
+  // movimiento por scroll: capas a distinta velocidad + progreso + haz de proyector.
+  // Todo en un solo rAF y solo con transform/opacity, que es lo que la GPU mueve gratis.
+  (function () {
+    const nav = document.getElementById('nav');
+    const stars = document.getElementById('stars');
+    const glow = document.querySelector('.hero-glow');
+    const heroIn = document.querySelector('.hero-in');
+    const barra = document.getElementById('progreso');
+    const haz = document.getElementById('haz');
+    const seccion = document.getElementById('catalogo');
+    const suave = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let pendiente = false;
+    const pintar = () => {
+      pendiente = false;
+      const y = scrollY;
+      nav.classList.toggle('scrolled', y > 12);
+
+      // progreso de lectura
+      const total = document.documentElement.scrollHeight - innerHeight;
+      barra.style.transform = 'scaleX(' + (total > 0 ? Math.min(y / total, 1) : 0) + ')';
+      if (suave) return;
+
+      // hero: tres capas a distinta velocidad = sensación de profundidad
+      if (y < innerHeight * 1.2) {
+        stars.style.transform = 'translate3d(0,' + y * 0.22 + 'px,0)';
+        glow.style.transform = 'translate3d(0,' + y * 0.38 + 'px,0)';
+        heroIn.style.transform = 'translate3d(0,' + y * 0.12 + 'px,0)';
+        heroIn.style.opacity = String(Math.max(0, 1 - y / (innerHeight * 0.78)));
+      }
+      // haz de proyector barriendo la sección de experiencias
+      if (seccion && haz) {
+        const r = seccion.getBoundingClientRect();
+        const p = 1 - (r.top + r.height) / (innerHeight + r.height); // 0→1 al pasar
+        haz.style.setProperty('--x', (8 + Math.max(0, Math.min(1, p)) * 62) + '%');
+      }
+    };
+    addEventListener('scroll', () => {
+      if (!pendiente) { pendiente = true; requestAnimationFrame(pintar); }
+    }, { passive: true });
+    addEventListener('resize', pintar, { passive: true });
+    pintar();
+  })();
+
+  // entrada progresiva
+  (function () {
+    const els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      els.forEach((e) => e.classList.add('in'));
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => {
+        if (!e.isIntersecting) return;
+        setTimeout(() => e.target.classList.add('in'), Math.min(i * 70, 280));
+        io.unobserve(e.target);
+      });
+    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.08 });
+    els.forEach((e) => io.observe(e));
+  })();
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // menú móvil
+  const burger = document.getElementById('burger');
+  const menuMovil = document.getElementById('menu-movil');
+  burger.addEventListener('click', () => {
+    const abierto = menuMovil.classList.toggle('abierto');
+    burger.classList.toggle('abierto', abierto);
+    burger.setAttribute('aria-expanded', abierto);
+    document.body.style.overflow = abierto ? 'hidden' : '';
+  });
+  menuMovil.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => {
+    menuMovil.classList.remove('abierto');
+    burger.classList.remove('abierto');
+    document.body.style.overflow = '';
+  }));
+</script>
+</body>
+</html>

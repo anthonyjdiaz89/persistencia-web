@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>render glb</title>
+<style>html,body{margin:0;height:100%;background:#060609;overflow:hidden}</style>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/" } }
+</script>
+</head>
+<body>
+<script type="module">
+  import * as THREE from 'three';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+  const q = new URLSearchParams(location.search);
+  const src = q.get('glb') || '../assets/models/meshy-cancha.glb';
+  const wire = q.get('wire') === '1';
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  document.body.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x060609);
+  const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 100);
+  scene.add(new THREE.AmbientLight(0xffffff, wire ? 0.25 : 0.85));
+  const d1 = new THREE.DirectionalLight(0xffffff, 0.5); d1.position.set(3, 5, 4); scene.add(d1);
+  const d2 = new THREE.DirectionalLight(0x4deeea, 0.25); d2.position.set(-4, 2, -3); scene.add(d2);
+
+  const loader = new GLTFLoader();
+  const draco = new DRACOLoader();
+  draco.setDecoderPath('../assets/draco/');
+  loader.setDRACOLoader(draco);
+  loader.load(src, (g) => {
+    const m = g.scene;
+    if (wire) m.traverse((o) => {
+      if (o.isMesh) o.material = new THREE.MeshBasicMaterial({ color: 0x4deeea, wireframe: true, transparent: true, opacity: 0.55 });
+    });
+    const box = new THREE.Box3().setFromObject(m);
+    const c = box.getCenter(new THREE.Vector3());
+    const s = box.getSize(new THREE.Vector3());
+    m.position.sub(c);
+    scene.add(m);
+    const r = Math.max(s.x, s.y, s.z);
+    camera.position.set(r * 0.9, r * 0.55, r * 1.15);
+    camera.lookAt(0, 0, 0);
+    renderer.render(scene, camera);
+    document.title = 'listo';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Camaleón — plantilla de landing con personaje | Persistencia Digital</title>
+<meta name="description" content="Plantilla de landing con personaje 3D generado por IA: un héroe con carácter, color pleno y conversión directa. El fondo se adapta a tu marca, como un camaleón." />
+<!-- seo-preciso -->
+<link rel="canonical" href="https://persistenciadigital.com/landing-camaleon/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Persistencia Digital" />
+<meta property="og:title" content="Camaleón — plantilla de landing con personaje | Persistencia Digital" />
+<meta property="og:description" content="Plantilla de landing con personaje 3D generado por IA: un héroe con carácter, color pleno y conversión directa. El fondo se adapta a tu marca, como un camaleón." />
+<meta property="og:url" content="https://persistenciadigital.com/landing-camaleon/" />
+<meta property="og:image" content="https://persistenciadigital.com/assets/og/landing-camaleon.jpg" />
+<meta property="og:image:secure_url" content="https://persistenciadigital.com/assets/og/landing-camaleon.jpg" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="1080" />
+<meta property="og:image:height" content="1080" />
+<meta property="og:locale" content="es_CO" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Camaleón — plantilla de landing con personaje | Persistencia Digital" />
+<meta name="twitter:description" content="Plantilla de landing con personaje 3D generado por IA: un héroe con carácter, color pleno y conversión directa. El fondo se adapta a tu marca, como un camaleón." />
+<meta name="twitter:image" content="https://persistenciadigital.com/assets/og/landing-camaleon.jpg" />
+<!-- /seo-preciso -->
+<link rel="icon" type="image/webp" href="../assets/isotipo.webp" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    /* la piel de la plantilla: cambia por cliente con una sola variable */
+    --piel: #b32072;
+    --piel-osc: #6c1c41;
+    --tinta: #fff7fb;
+    --tinta-dim: rgba(255, 247, 251, 0.72);
+    --acento: #4deeea;
+    --radius: 18px;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    background: var(--piel);
+    color: var(--tinta);
+    overflow-x: clip;
+    transition: background 1.2s var(--ease);
+  }
+
+  /* ---------- nav mínima ---------- */
+  nav {
+    position: fixed; inset: 0 0 auto 0; z-index: 40;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px clamp(18px, 4vw, 44px);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: 0.02em; font-size: 14px; color: var(--tinta); text-decoration: none; }
+  .logo img { width: 26px; height: 26px; }
+  .nav-cta {
+    padding: 10px 20px; border-radius: 999px; font-size: 13.5px; font-weight: 700;
+    color: var(--piel-osc); background: var(--tinta); text-decoration: none;
+    transition: transform 0.25s var(--ease);
+  }
+  .nav-cta:hover { transform: translateY(-2px); }
+  .volver {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 16px; border-radius: 999px; font-size: 13.5px; font-weight: 650;
+    color: var(--tinta); text-decoration: none;
+    border: 1.5px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(6px); transition: background 0.25s, transform 0.25s var(--ease);
+  }
+  .volver:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+  @media (max-width: 560px) { .volver-txt { display: none; } .volver { padding: 9px 12px; } }
+
+  /* ---------- héroe ---------- */
+  .heroe {
+    position: relative; min-height: 100svh;
+    display: grid; place-items: center;
+    overflow: clip; text-align: center;
+    background: radial-gradient(120% 90% at 50% 10%, transparent 40%, rgba(0,0,0,0.28) 100%);
+  }
+  .titular {
+    position: absolute; top: 9svh; left: 50%; transform: translateX(-50%);
+    width: min(1100px, 94vw); z-index: 1; pointer-events: none;
+  }
+  .titular h1 {
+    font-size: clamp(40px, 7.2vw, 98px); line-height: 1.02; font-weight: 850;
+    letter-spacing: -0.03em;
+  }
+  .titular h1 span { display: block; }
+  .titular h1 i { font-style: normal; color: var(--acento); }
+  .camaleon {
+    position: relative; z-index: 2; margin-top: 37svh;
+    width: min(345px, 56vw); filter: drop-shadow(0 40px 50px rgba(0,0,0,0.35));
+    animation: flotar 5.5s ease-in-out infinite;
+    will-change: transform;
+  }
+  .camaleon img { width: 100%; display: block; }
+  @keyframes flotar {
+    0%, 100% { transform: translateY(0) rotate(-0.6deg); }
+    50% { transform: translateY(-16px) rotate(0.6deg); }
+  }
+  .pills {
+    position: absolute; bottom: 12svh; left: 50%; transform: translateX(-50%);
+    z-index: 3; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+    width: min(720px, 92vw);
+  }
+  .pill {
+    padding: 10px 18px; border-radius: 999px; font-size: 13.5px; font-weight: 650;
+    color: var(--tinta); border: 1.5px solid rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.08); backdrop-filter: blur(6px);
+    cursor: pointer; transition: background 0.25s, transform 0.25s var(--ease);
+    user-select: none;
+  }
+  .pill:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+  .pill.activa { background: var(--tinta); color: var(--piel-osc); border-color: var(--tinta); }
+  .indicacion {
+    position: absolute; bottom: 5svh; left: 50%; transform: translateX(-50%);
+    z-index: 3; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--tinta-dim);
+  }
+
+  /* ---------- secciones ---------- */
+  section { position: relative; padding: clamp(70px, 12vw, 130px) clamp(18px, 5vw, 60px); }
+  .wrap { max-width: 1060px; margin: 0 auto; }
+  .kicker {
+    font-size: 12px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--acento); margin-bottom: 14px;
+  }
+  h2 { font-size: clamp(30px, 5vw, 54px); font-weight: 850; letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 18px; }
+  .lede { font-size: clamp(16px, 2vw, 19px); color: var(--tinta-dim); max-width: 620px; line-height: 1.6; }
+
+  .tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 44px; }
+  .tarjeta {
+    border-radius: var(--radius); padding: 26px;
+    background: rgba(0,0,0,0.22); border: 1px solid rgba(255,255,255,0.14);
+    transition: transform 0.3s var(--ease), background 0.3s;
+  }
+  .tarjeta:hover { transform: translateY(-4px); background: rgba(0,0,0,0.3); }
+  .tarjeta b { display: block; font-size: 18px; margin-bottom: 8px; }
+  .tarjeta p { font-size: 14.5px; color: var(--tinta-dim); line-height: 1.55; }
+
+  .cta-final { text-align: center; }
+  .boton {
+    display: inline-block; margin-top: 28px; padding: 16px 34px; border-radius: 999px;
+    font-size: 16px; font-weight: 800; text-decoration: none;
+    color: var(--piel-osc); background: var(--tinta);
+    transition: transform 0.25s var(--ease), box-shadow 0.25s;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+  .boton:hover { transform: translateY(-3px); box-shadow: 0 18px 50px rgba(0,0,0,0.4); }
+
+  footer {
+    padding: 30px; text-align: center; font-size: 12.5px; color: var(--tinta-dim);
+  }
+  footer a { color: var(--tinta); }
+
+  .reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.8s var(--ease), transform 0.8s var(--ease); }
+  .reveal.visto { opacity: 1; transform: none; }
+
+  @media (max-width: 640px) {
+    .titular { top: 10svh; }
+    .camaleon { margin-top: 34svh; }
+    .pills { bottom: 12svh; }
+  }
+</style>
+<script defer src="../assets/medicion.js"></script>
+</head>
+<body>
+
+<nav>
+  <div style="display:flex;align-items:center;gap:14px">
+    <a class="volver" href="/#s-web" aria-label="Volver al catálogo"><span aria-hidden="true">←</span><span class="volver-txt">Volver</span></a>
+    <a class="logo" href="/"><img src="../assets/isotipo.webp" alt="" />PERSISTENCIA DIGITAL</a>
+  </div>
+  <a class="nav-cta" href="https://wa.me/573207333874?text=Hola%21%20Vi%20la%20plantilla%20Camale%C3%B3n%20en%20persistenciadigital.com%20y%20quiero%20una%20landing%20as%C3%AD%20para%20mi%20marca." target="_blank" rel="noopener">Quiero la mía</a>
+</nav>
+
+<div class="heroe" id="heroe">
+  <div class="titular">
+    <h1><span>Tu marca puede ser</span><span><i id="palabra">cualquier color</i></span></h1>
+  </div>
+  <div class="camaleon" id="camaleon">
+    <img id="cuadro" src="assets/giro/g06.webp" alt="Camaleón con gafas VR, mascota de la plantilla" />
+  </div>
+  <div class="pills" id="pills">
+    <span class="pill activa" data-piel="#b32072" data-osc="#6c1c41" data-palabra="cualquier color">Magenta</span>
+    <span class="pill" data-piel="#0e7490" data-osc="#083a49" data-palabra="tan fresca como quieras">Cian</span>
+    <span class="pill" data-piel="#c2570b" data-osc="#5f2b06" data-palabra="pura energía">Naranja</span>
+    <span class="pill" data-piel="#15803d" data-osc="#0a3d1e" data-palabra="naturalmente tuya">Verde</span>
+    <span class="pill" data-piel="#1e1b4b" data-osc="#0d0b26" data-palabra="elegantemente oscura">Noche</span>
+  </div>
+  <div class="indicacion">Toca un color — el camaleón se adapta, igual que nosotros</div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="kicker reveal">La plantilla</div>
+    <h2 class="reveal">Un personaje con carácter<br />vende más que mil párrafos</h2>
+    <p class="lede reveal">Creamos la mascota de tu marca con IA — un personaje único, tuyo — y la volvemos el héroe de una landing que la gente recuerda. Color pleno, mensaje directo y un botón que va derecho a tu WhatsApp.</p>
+    <div class="tarjetas">
+      <div class="tarjeta reveal"><b>Mascota a la medida</b><p>Generamos el personaje según tu marca: especie, ropa, actitud y colores. Este camaleón salió de una sola frase.</p></div>
+      <div class="tarjeta reveal"><b>Se adapta a todo</b><p>La misma plantilla cambia de piel: colores, textos y personaje se ajustan por cliente sin rehacer nada.</p></div>
+      <div class="tarjeta reveal"><b>Convierte de una</b><p>Cada botón lleva a tu WhatsApp con el mensaje listo. Sin formularios eternos ni pasos de más.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-final">
+  <div class="wrap">
+    <div class="kicker reveal">Tu evento, tu marca</div>
+    <h2 class="reveal">¿Qué personaje sería tu marca?</h2>
+    <p class="lede reveal" style="margin: 0 auto;">Cuéntanos de tu negocio y te proponemos la mascota, el color y el mensaje. La landing queda lista en días, no en meses.</p>
+    <a class="boton reveal" href="https://wa.me/573207333874?text=Hola%21%20Vi%20la%20plantilla%20Camale%C3%B3n%20en%20persistenciadigital.com%20y%20quiero%20una%20landing%20as%C3%AD%20para%20mi%20marca." target="_blank" rel="noopener">Quiero mi landing con personaje</a>
+  </div>
+</section>
+
+<footer>
+  Hecho en Barranquilla por <a href="/">Persistencia Digital</a> · Personaje generado con IA — plantilla Camaleón
+</footer>
+
+<script>
+  // cambio de piel: el fondo, el tono y el titular mutan con cada color
+  const raiz = document.documentElement;
+  const palabra = document.getElementById('palabra');
+  document.getElementById('pills').addEventListener('click', (e) => {
+    const p = e.target.closest('.pill');
+    if (!p) return;
+    document.querySelectorAll('.pill').forEach((x) => x.classList.remove('activa'));
+    p.classList.add('activa');
+    raiz.style.setProperty('--piel', p.dataset.piel);
+    raiz.style.setProperty('--piel-osc', p.dataset.osc);
+    palabra.style.opacity = 0;
+    setTimeout(() => { palabra.textContent = p.dataset.palabra; palabra.style.opacity = 1; }, 250);
+  });
+  palabra.style.transition = 'opacity 0.25s';
+
+  // el camaleón TE MIRA de verdad: 13 fotogramas pre-renderizados con IA
+  // (giro real de cabeza en 3D) y el mouse recorre la secuencia
+  const cam = document.getElementById('camaleon');
+  const cuadro = document.getElementById('cuadro');
+  const N_CUADROS = 13;
+  const cuadros = [];
+  for (let i = 0; i < N_CUADROS; i++) {
+    const im = new Image();
+    im.src = `assets/giro/g${String(i).padStart(2, '0')}.webp`;
+    cuadros.push(im);
+  }
+  let px = 0, py = 0, tx = 0, ty = 0; // parallax suave del conjunto
+  let fx = (N_CUADROS - 1) / 2, fObj = fx; // fotograma actual y objetivo
+  addEventListener('mousemove', (e) => {
+    const nx = e.clientX / innerWidth;
+    fObj = (1 - nx) * (N_CUADROS - 1); // secuencia invertida respecto al cursor
+    tx = (nx - 0.5) * 14;
+    ty = (e.clientY / innerHeight - 0.5) * 8;
+  });
+  addEventListener('deviceorientation', (e) => {
+    if (e.gamma == null) return;
+    const nx = Math.max(0, Math.min(1, 0.5 + e.gamma / 40));
+    fObj = (1 - nx) * (N_CUADROS - 1);
+    tx = (nx - 0.5) * 14;
+  });
+  let ultimo = -1;
+  (function mover() {
+    px += (tx - px) * 0.06;
+    py += (ty - py) * 0.06;
+    fx += (fObj - fx) * 0.18; // el giro persigue al cursor con suavidad
+    cam.style.translate = `${px}px ${py}px`;
+    const i = Math.round(fx);
+    if (i !== ultimo && cuadros[i] && cuadros[i].complete) {
+      cuadro.src = cuadros[i].src;
+      ultimo = i;
+    }
+    requestAnimationFrame(mover);
+  })();
+
+  // aparición al hacer scroll
+  const io = new IntersectionObserver((entradas) => {
+    entradas.forEach((en) => { if (en.isIntersecting) { en.target.classList.add('visto'); io.unobserve(en.target); } });
+  }, { threshold: 0.2 });
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+</script>
+</body>
+</html>
