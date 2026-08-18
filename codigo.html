@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>Código de vinculación</title>
+<link rel="icon" type="image/webp" href="assets/isotipo.webp" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #06060c; color: #f4f6ff; font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh; display: grid; place-items: center; text-align: center; padding: 24px;
+  }
+  .banda { position: fixed; top: 0; left: 0; right: 0; height: 3px;
+           background: linear-gradient(90deg, #4deeea, #3d5afe 45%, #d94de8); }
+  .rotulo { font-size: 14px; letter-spacing: .18em; text-transform: uppercase; color: rgba(244,246,255,.55); }
+  #codigo { font-size: clamp(44px, 14vw, 86px); font-weight: 850; letter-spacing: .12em;
+            color: #4deeea; margin: 20px 0 10px; font-variant-numeric: tabular-nums; }
+  #estado { font-size: 13.5px; color: rgba(244,246,255,.6); }
+  .pasos { margin-top: 34px; font-size: 13.5px; color: rgba(244,246,255,.72); max-width: 340px; line-height: 1.7; }
+  .ok { color: #7CFFB2 !important; }
+</style>
+</head>
+<body>
+<div class="banda"></div>
+<main>
+  <div class="rotulo">Código para vincular el bot</div>
+  <div id="codigo">…</div>
+  <div id="estado">buscando el código vigente</div>
+  <div class="pasos">
+    En el celular del 320 733 3874: WhatsApp → Dispositivos vinculados → Vincular dispositivo →
+    <b>Vincular con número de teléfono</b> → escribe el código que aparezca aquí en ese momento.
+  </div>
+</main>
+<script>
+  var FUENTE = "https://bd.persistenciadigital.com/storage/v1/object/public/publico/codigo-bot.txt";
+  async function mirar() {
+    try {
+      var r = await fetch(FUENTE + "?t=" + Date.now(), { cache: "no-store" });
+      var t = (await r.text()).trim();
+      var partes = t.split("|");
+      var cod = partes[0] || "";
+      var edad = partes[1] || "";
+      if (cod === "VINCULADO") {
+        document.getElementById("codigo").textContent = "VINCULADO";
+        document.getElementById("codigo").className = "ok";
+        document.getElementById("estado").textContent = "el bot ya está conectado";
+      } else if (cod) {
+        document.getElementById("codigo").textContent = cod;
+        document.getElementById("estado").textContent = "generado hace " + edad + " s · se actualiza solo";
+      }
+    } catch (e) {
+      document.getElementById("estado").textContent = "reintentando…";
+    }
+  }
+  mirar();
+  setInterval(mirar, 4000);
+</script>
+</body>
+</html>
