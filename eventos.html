@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Activaciones para ferias y stands — Persistencia Digital</title>
+<link rel="icon" type="image/webp" href="assets/isotipo.webp" />
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+<meta name="theme-color" content="#060609" />
+<meta name="description" content="Activaciones digitales para su stand, diseñadas para que la gente se detenga y deje sus datos. Mándenos su logo y le devolvemos una demo con su marca en 24 horas." />
+<!-- seo-preciso -->
+<link rel="canonical" href="https://persistenciadigital.com/eventos" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Persistencia Digital" />
+<meta property="og:title" content="Activaciones para ferias y stands — Persistencia Digital" />
+<meta property="og:description" content="Que la gente se detenga en su stand y deje sus datos. Mándenos su logo y le devolvemos una demo con su marca en 24 horas." />
+<meta property="og:url" content="https://persistenciadigital.com/eventos" />
+<meta property="og:image" content="https://persistenciadigital.com/assets/og/index.jpg" />
+<meta property="og:locale" content="es_CO" />
+<meta name="twitter:card" content="summary_large_image" />
+<!-- /seo-preciso -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cyan: #4deeea; --blue: #3d5afe; --purple: #7b4de0; --magenta: #d94de8;
+    --grad: linear-gradient(90deg, var(--cyan), var(--blue) 38%, var(--purple) 68%, var(--magenta) 100%);
+    --bg: #060609; --bg-elev: #0c0c14;
+    --surface: rgba(255,255,255,0.035);
+    --border: rgba(255,255,255,0.10);
+    --border-strong: rgba(255,255,255,0.18);
+    --fg: #f4f5fa; --fg-muted: #a8adc0; --fg-dim: #6f7488;
+    --s1: 8px; --s2: 16px; --s3: 24px; --s4: 32px; --s5: 48px; --s6: 64px; --s7: 96px; --s8: 128px;
+    --radius: 20px;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  html { scroll-behavior: smooth; overflow-x: clip; -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 16px; line-height: 1.6; overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  img { max-width: 100%; display: block; }
+  ::selection { background: rgba(77,238,234,0.28); }
+  :focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; border-radius: 6px; }
+
+  .wrap { width: min(1200px, 100% - var(--s4)); margin-inline: auto; }
+  .brand-bar { position: fixed; inset: 0 0 auto 0; height: 3px; background: var(--grad); z-index: 100; }
+
+  /* ---------- nav ---------- */
+  nav.top {
+    position: sticky; top: 3px; z-index: 90;
+    background: rgba(6,6,9,0.82); backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  nav.top .wrap { display: flex; align-items: center; justify-content: space-between; padding: var(--s2) 0; gap: var(--s2); }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: 0.02em; font-size: 14px; }
+  .logo img { width: 30px; height: 30px; }
+  .logo span { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* ---------- botones ---------- */
+  .cta {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 52px; padding: 14px 26px; border-radius: 999px;
+    background: var(--grad); color: #05050a; font-weight: 800; font-size: 15.5px;
+    border: none; cursor: pointer; text-align: center;
+    transition: transform 0.25s var(--ease), filter 0.25s var(--ease);
+  }
+  .cta:hover { transform: translateY(-2px); filter: brightness(1.08); }
+  .cta.ghost {
+    background: transparent; color: var(--fg);
+    border: 1px solid var(--border-strong); font-weight: 700;
+  }
+  .cta.ghost:hover { border-color: var(--cyan); }
+  .cta-row { display: flex; flex-wrap: wrap; gap: var(--s2); }
+
+  /* bloque de cierre repetido tras cada sección */
+  .cierre {
+    margin-top: var(--s5); padding: var(--s4);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface);
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s3);
+  }
+  .cierre p { font-weight: 700; font-size: 17px; max-width: 46ch; }
+  .cierre small { display: block; font-weight: 400; font-size: 14px; color: var(--fg-muted); margin-top: 4px; }
+
+  /* ---------- secciones ---------- */
+  section { padding: var(--s7) 0; border-top: 1px solid var(--border); }
+  section:first-of-type { border-top: none; }
+  .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--cyan); margin-bottom: var(--s2);
+  }
+  h1 { font-size: clamp(34px, 6.4vw, 62px); line-height: 1.06; font-weight: 800; letter-spacing: -0.02em; }
+  h2 { font-size: clamp(26px, 3.8vw, 40px); line-height: 1.15; font-weight: 800; letter-spacing: -0.015em; }
+  h3 { font-size: 18px; font-weight: 700; }
+  .lead { font-size: clamp(17px, 2.1vw, 20px); color: var(--fg-muted); max-width: 60ch; margin-top: var(--s3); }
+  .grad { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* hero */
+  .hero { position: relative; padding: var(--s8) 0 var(--s7); overflow: hidden; }
+  .hero::before {
+    content: ''; position: absolute; inset: -20% -10% auto; height: 620px; z-index: -1;
+    background:
+      radial-gradient(620px 420px at 22% 30%, rgba(61,90,254,0.20), transparent 70%),
+      radial-gradient(520px 380px at 82% 20%, rgba(217,77,232,0.14), transparent 70%);
+  }
+  .hero-grid { display: grid; gap: var(--s5); grid-template-columns: 1fr; align-items: center; }
+  @media (min-width: 900px) { .hero-grid { grid-template-columns: 1.05fr 0.95fr; } }
+  .hero figure { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  .hero figcaption {
+    padding: 12px 16px; font-size: 13.5px; color: var(--fg-muted);
+    background: var(--bg-elev); border-top: 1px solid var(--border);
+  }
+
+  /* piezas */
+  .piezas { display: grid; gap: var(--s3); grid-template-columns: 1fr; margin-top: var(--s5); }
+  @media (min-width: 760px) { .piezas { grid-template-columns: repeat(3, 1fr); } }
+  .pieza { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--bg-elev); }
+  .pieza p { padding: 14px 18px 18px; font-size: 14.5px; color: var(--fg-muted); }
+  .pieza b { color: var(--fg); display: block; font-size: 15.5px; margin-bottom: 4px; }
+
+  /* proceso */
+  .pasos { display: grid; gap: var(--s3); grid-template-columns: 1fr; margin-top: var(--s5); counter-reset: paso; }
+  @media (min-width: 760px) { .pasos { grid-template-columns: repeat(3, 1fr); } }
+  .paso {
+    position: relative; padding: var(--s4) var(--s3) var(--s3);
+    border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+  }
+  .paso::before {
+    counter-increment: paso; content: counter(paso);
+    position: absolute; top: -18px; left: var(--s3);
+    width: 36px; height: 36px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--grad); color: #05050a; font-weight: 800; font-size: 15px;
+  }
+  .paso h3 { margin-bottom: 6px; }
+  .paso p { font-size: 14.5px; color: var(--fg-muted); }
+
+  /* beneficios */
+  .lista-bien { display: grid; gap: var(--s2); margin-top: var(--s4); }
+  .lista-bien li { list-style: none; display: flex; gap: 12px; align-items: flex-start; font-size: 16px; color: var(--fg-muted); }
+  .lista-bien b { color: var(--fg); }
+  .tic { flex: none; width: 22px; height: 22px; margin-top: 2px; }
+
+  /* faq */
+  details {
+    border: 1px solid var(--border); border-radius: 14px; background: var(--surface);
+    padding: var(--s2) var(--s3); margin-top: var(--s2);
+  }
+  details[open] { border-color: var(--border-strong); }
+  summary { cursor: pointer; font-weight: 700; font-size: 16.5px; list-style: none; padding: 6px 0; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+'; float: right; color: var(--cyan); font-weight: 400; font-size: 22px; line-height: 1; }
+  details[open] summary::after { content: '\2212'; }
+  details p { color: var(--fg-muted); font-size: 15.5px; padding: 6px 0 10px; max-width: 68ch; }
+
+  footer { padding: var(--s6) 0; border-top: 1px solid var(--border); color: var(--fg-dim); font-size: 13.5px; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: var(--s2); justify-content: space-between; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .cta:hover { transform: none; }
+  }
+</style>
+<script defer src="assets/medicion.js"></script>
+</head>
+<body>
+<div class="brand-bar"></div>
+
+<nav class="top">
+  <div class="wrap">
+    <a class="logo" href="index.html">
+      <img src="assets/isotipo.webp" alt="" width="30" height="30" />
+      PERSISTENCIA <span>DIGITAL</span>
+    </a>
+    <a class="cta ghost" href="#hablemos">Pedir mi demo</a>
+  </div>
+</nav>
+
+<!-- ===================== 1. HERO — ¿qué es y es para mí? ===================== -->
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow">Ferias, stands y activaciones de marca</p>
+      <h1>Que la gente <span class="grad">se detenga</span> en su stand y deje sus datos.</h1>
+      <p class="lead">
+        Usted paga metros, montaje, transporte y personal para tres días de feria.
+        Nosotros ponemos la razón para que la gente frene, saque el celular y quiera
+        entrar. Y usted se lleva la base de datos.
+      </p>
+      <div class="cta-row" style="margin-top:var(--s4)">
+        <a class="cta" href="#hablemos">Mándenos su logo</a>
+        <a class="cta ghost" href="feria.html">Probar una activación ahora</a>
+      </div>
+      <p style="margin-top:var(--s3); font-size:14px; color:var(--fg-dim)">
+        Le devolvemos una demo con su marca en 24 horas, antes de que contrate nada.
+      </p>
+    </div>
+
+    <figure>
+      <img src="assets/eventos/ar-persi.webp" width="900" height="1592" alt="Visitantes de una feria miran un celular donde aparece el anfitrión digital de Persistencia Digital de pie en el pasillo, saludando." />
+      <figcaption>El visitante apunta el celular y nuestro anfitrión digital aparece en el pasillo. Eso es lo que hace que frene.</figcaption>
+    </figure>
+  </div>
+</header>
+
+<!-- ===================== 2. TRABAJO — ¿pueden hacerlo? ===================== -->
+<section id="trabajo">
+  <div class="wrap">
+    <p class="eyebrow">El trabajo</p>
+    <h2>No le mostramos un portafolio.<br />Le mostramos la activación funcionando.</h2>
+    <p class="lead">
+      Todo lo que ve acá está construido y corre en un navegador. No hay maqueta ni render de
+      lo que "podríamos" hacer.
+    </p>
+
+    <div class="piezas">
+      <article class="pieza">
+        <img src="assets/eventos/anfitrion.webp" width="900" height="1592" loading="lazy" alt="Un anfitrión digital a tamaño real en la pantalla LED de un stand saluda a un grupo de visitantes que lo miran y lo graban." />
+        <p><b>Un anfitrión que recibe</b>Persi saluda desde la pantalla, presenta la marca y explica la dinámica. La misma cara y la misma voz durante los tres días, sin descansos.</p>
+      </article>
+      <article class="pieza">
+        <img src="assets/eventos/antes-despues.webp" width="800" height="1415" loading="lazy" alt="Comparación entre un stand convencional por el que la gente pasa de largo y un stand con activación digital rodeado de público." />
+        <p><b>La diferencia en el pasillo</b>Arriba, un stand por el que la gente pasa de largo. Abajo, el mismo pasillo con una activación que da razón para detenerse.</p>
+      </article>
+      <article class="pieza">
+        <img src="assets/eventos/premium.webp" width="900" height="1592" loading="lazy" alt="Stand oscuro con líneas de luz de color cian y magenta fotografiado de noche en un pabellón vacío." />
+        <p><b>Montaje a la altura</b>Estructura, pantalla y luz diseñadas juntas. La activación no es un televisor colgado en una pared alquilada.</p>
+      </article>
+    </div>
+
+    <div class="cierre">
+      <p>Pruebe una ahora mismo, desde este celular.
+        <small>Lluvia de Premios corre en su navegador. Sin instalar nada.</small></p>
+      <div class="cta-row">
+        <a class="cta ghost" href="feria.html">Abrir la activación</a>
+        <a class="cta" href="#hablemos">Mándenos su logo</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 3. PROCESO — ¿qué tengo que hacer? ===================== -->
+<section id="proceso">
+  <div class="wrap">
+    <p class="eyebrow">El proceso</p>
+    <h2>Usted pone tres cosas. Del resto nos encargamos.</h2>
+
+    <div class="pasos">
+      <article class="paso">
+        <h3>Nos manda su logo</h3>
+        <p>Su logo, sus colores y la fecha del evento. Nada más. Un mensaje de WhatsApp basta.</p>
+      </article>
+      <article class="paso">
+        <h3>Recibe su demo en 24 horas</h3>
+        <p>La activación con su marca, funcionando en su celular. La ve, la prueba y la muestra internamente antes de contratar.</p>
+      </article>
+      <article class="paso">
+        <h3>Definimos el montaje</h3>
+        <p>Qué mecánica, en qué pantalla o dispositivo, quién la opera y qué datos captura. Todo por escrito antes de empezar.</p>
+      </article>
+    </div>
+
+    <div class="cierre">
+      <p>El primer paso no le cuesta ni lo compromete.
+        <small>Si la demo no le sirve, ahí termina.</small></p>
+      <a class="cta" href="#hablemos">Mándenos su logo</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 4. BENEFICIOS — ¿qué consigo? ===================== -->
+<section id="beneficios">
+  <div class="wrap">
+    <p class="eyebrow">Qué se lleva</p>
+    <h2>Lo que queda cuando se desmonta el stand.</h2>
+
+    <ul class="lista-bien">
+      <li>
+        <svg class="tic" viewBox="0 0 24 24" fill="none" stroke="url(#g)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4deeea"/><stop offset="1" stop-color="#d94de8"/></linearGradient></defs><path d="M20 6 9 17l-5-5"/></svg>
+        <span><b>La base de datos de quienes participaron</b>, en un archivo suyo. No en una plataforma nuestra que tenga que seguir pagando.</span>
+      </li>
+      <li>
+        <svg class="tic" viewBox="0 0 24 24" fill="none" stroke="url(#g)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <span><b>El material audiovisual de la activación</b>: la gente jugando, reaccionando y compartiendo, listo para sus redes.</span>
+      </li>
+      <li>
+        <svg class="tic" viewBox="0 0 24 24" fill="none" stroke="url(#g)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <span><b>Una activación que se puede volver a montar</b> en el siguiente evento, con los ajustes que quiera.</span>
+      </li>
+      <li>
+        <svg class="tic" viewBox="0 0 24 24" fill="none" stroke="url(#g)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <span><b>Una razón concreta para que se acerquen</b>, en vez de un mesón con folletos y un dulce.</span>
+      </li>
+    </ul>
+
+    <div class="cierre">
+      <p>Cuéntenos qué evento tiene y para cuándo.
+        <small>Le decimos de frente si le sirve o no.</small></p>
+      <a class="cta" href="#hablemos">Mándenos su logo</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 5. PREGUNTAS — ¿qué podría detenerme? ===================== -->
+<section id="preguntas">
+  <div class="wrap">
+    <p class="eyebrow">Antes de que pregunte</p>
+    <h2>Lo que todos nos preguntan.</h2>
+
+    <div style="margin-top:var(--s4)">
+      <details>
+        <summary>¿Cuánto cuesta?</summary>
+        <p>Depende de la mecánica, de los días de evento y de si necesita equipos en sitio o corre en los celulares de los visitantes. Por eso la demo va primero: con ella sobre la mesa cotizamos algo real y no un rango inventado.</p>
+      </details>
+      <details>
+        <summary>¿Quién la opera durante el evento?</summary>
+        <p>Se define antes del montaje y queda por escrito. Puede operarla su propio personal, con una capacitación corta, o podemos estar nosotros en sitio. Son dos costos distintos y se lo decimos desde el principio.</p>
+      </details>
+      <details>
+        <summary>¿Y si se cae el internet del recinto?</summary>
+        <p>Es la pregunta correcta y nos ha pasado. Las activaciones que montamos en sitio corren en local, sin depender del wifi del recinto. Las que funcionan en el celular del visitante sí necesitan conexión, y para eso se lleva un plan de datos propio.</p>
+      </details>
+      <details>
+        <summary>¿De quién son los datos que se capturan?</summary>
+        <p>Suyos. Se los entregamos en un archivo al cierre del evento. Nosotros no los usamos para nada más, y la captura se hace con el aviso de tratamiento de datos que exige la ley colombiana.</p>
+      </details>
+      <details>
+        <summary>¿Con cuánto tiempo hay que avisar?</summary>
+        <p>La demo con su marca sale en 24 horas. El montaje completo depende de la mecánica: entre más equipos en sitio, más tiempo. Escríbanos con la fecha y le decimos de una si alcanzamos.</p>
+      </details>
+      <details>
+        <summary>¿Han hecho esto antes?</summary>
+        <p>Sí. Hemos trabajado con SLM Logistics, Cocos Club, Premios India Catalina y RV Producciones, y el catálogo completo de experiencias está publicado y funcionando en este mismo sitio para que lo pruebe usted mismo.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CIERRE ===================== -->
+<section id="hablemos">
+  <div class="wrap" style="text-align:center">
+    <p class="eyebrow" style="justify-self:center">Empecemos</p>
+    <h2>Mándenos su logo y le devolvemos<br />la demo con su marca.</h2>
+    <p class="lead" style="margin-inline:auto">
+      Sin reunión de por medio y sin compromiso. Si le sirve, seguimos; si no, ahí queda.
+    </p>
+    <div class="cta-row" style="justify-content:center; margin-top:var(--s4)">
+      <a class="cta" href="https://wa.me/573207333874?text=Hola.%20Tengo%20un%20evento%20y%20quiero%20la%20demo%20con%20mi%20marca." target="_blank" rel="noopener">Escribir por WhatsApp</a>
+      <a class="cta ghost" href="mailto:contacto@persistenciadigital.com?subject=Activaci%C3%B3n%20para%20mi%20evento">Escribir por correo</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Persistencia Digital · Barranquilla, Colombia</span>
+    <span><a href="index.html">Catálogo completo</a> · <a href="privacidad.html">Privacidad</a></span>
+  </div>
+</footer>
+</body>
+</html>
