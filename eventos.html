@@ -46,7 +46,10 @@
     -webkit-font-smoothing: antialiased;
   }
   a { color: inherit; text-decoration: none; }
-  img { max-width: 100%; display: block; }
+  /* height:auto es imprescindible: los atributos width/height del <img> se
+     mapean como altura definida y, con alto Y ancho definidos, el navegador
+     IGNORA aspect-ratio. Sin esto las tomas 9:16 salian a 1592px de alto. */
+  img { max-width: 100%; display: block; height: auto; }
   ::selection { background: rgba(77,238,234,0.28); }
   :focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; border-radius: 6px; }
 
@@ -114,15 +117,35 @@
   .hero-grid { display: grid; gap: var(--s5); grid-template-columns: 1fr; align-items: center; }
   @media (min-width: 900px) { .hero-grid { grid-template-columns: 1.05fr 0.95fr; } }
   .hero figure { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  /* las piezas se generaron en 9:16 para redes; en web se recortan a una
+     ventana mas baja para que no se conviertan en columnas altisimas */
+  /* el encuadre baja al 70%: lo que vende esta en el tercio inferior de la
+     toma (el celular con el anfitrion y las caras reaccionando), no arriba */
+  .hero figure img { aspect-ratio: 4 / 5; object-fit: cover; object-position: 50% 70%; width: 100%; height: 100%; }
+  @media (min-width: 900px) { .hero figure img { aspect-ratio: 1 / 1; } }
   .hero figcaption {
     padding: 12px 16px; font-size: 13.5px; color: var(--fg-muted);
     background: var(--bg-elev); border-top: 1px solid var(--border);
   }
 
+  /* comparacion: no se puede recortar sin destruirla (el antes va arriba y el
+     despues abajo), asi que va en su propia fila y se limita por altura */
+  .comparacion {
+    display: grid; gap: var(--s4); grid-template-columns: 1fr;
+    align-items: center; margin-top: var(--s5);
+    padding: var(--s4); border: 1px solid var(--border);
+    border-radius: var(--radius); background: var(--bg-elev);
+  }
+  @media (min-width: 860px) { .comparacion { grid-template-columns: minmax(0, 340px) 1fr; } }
+  .comparacion img { width: 100%; max-height: 520px; object-fit: contain; border-radius: 12px; }
+  .comparacion h3 { font-size: 22px; margin-bottom: var(--s2); }
+  .comparacion p { color: var(--fg-muted); max-width: 52ch; }
+
   /* piezas */
-  .piezas { display: grid; gap: var(--s3); grid-template-columns: 1fr; margin-top: var(--s5); }
-  @media (min-width: 760px) { .piezas { grid-template-columns: repeat(3, 1fr); } }
+  .piezas { display: grid; gap: var(--s3); grid-template-columns: 1fr; margin-top: var(--s3); }
+  @media (min-width: 700px) { .piezas { grid-template-columns: repeat(2, 1fr); } }
   .pieza { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--bg-elev); }
+  .pieza img { aspect-ratio: 4 / 3; object-fit: cover; object-position: 50% 42%; width: 100%; height: 100%; }
   .pieza p { padding: 14px 18px 18px; font-size: 14.5px; color: var(--fg-muted); }
   .pieza b { color: var(--fg); display: block; font-size: 15.5px; margin-bottom: 4px; }
 
@@ -221,14 +244,22 @@
       lo que "podríamos" hacer.
     </p>
 
+    <div class="comparacion">
+      <img src="assets/eventos/antes-despues.webp" width="800" height="1415" loading="lazy" alt="Comparación vertical: arriba un stand convencional por el que la gente pasa de largo, abajo un stand con activación digital rodeado de público." />
+      <div>
+        <h3>La diferencia se mide en el pasillo</h3>
+        <p>
+          Arriba, un stand bien montado por el que la gente pasa de largo mirando el
+          teléfono. Abajo, el mismo pasillo cuando hay una razón concreta para frenar.
+          No cambió el presupuesto del stand: cambió lo que había adentro.
+        </p>
+      </div>
+    </div>
+
     <div class="piezas">
       <article class="pieza">
         <img src="assets/eventos/anfitrion.webp" width="900" height="1592" loading="lazy" alt="Un anfitrión digital a tamaño real en la pantalla LED de un stand saluda a un grupo de visitantes que lo miran y lo graban." />
         <p><b>Un anfitrión que recibe</b>Persi saluda desde la pantalla, presenta la marca y explica la dinámica. La misma cara y la misma voz durante los tres días, sin descansos.</p>
-      </article>
-      <article class="pieza">
-        <img src="assets/eventos/antes-despues.webp" width="800" height="1415" loading="lazy" alt="Comparación entre un stand convencional por el que la gente pasa de largo y un stand con activación digital rodeado de público." />
-        <p><b>La diferencia en el pasillo</b>Arriba, un stand por el que la gente pasa de largo. Abajo, el mismo pasillo con una activación que da razón para detenerse.</p>
       </article>
       <article class="pieza">
         <img src="assets/eventos/premium.webp" width="900" height="1592" loading="lazy" alt="Stand oscuro con líneas de luz de color cian y magenta fotografiado de noche en un pabellón vacío." />
