@@ -15,6 +15,7 @@ import { bd, baseViva } from './datos.js';
 import { resumen, porCategoria } from './calculos.js';
 import { exportarEvento, exportarEventos, importarEvento } from './excel.js';
 import { cotizacionHTML, COTIZACION_EN_BLANCO } from './cotizacion.js';
+import { verificar, publico, filaDesdeFormulario } from './usuarios.js';
 
 const app = express();
 const PUERTO = Number(process.env.PUERTO || 3000);
@@ -31,22 +32,32 @@ app.use(express.json({ limit: '2mb' }));
 
 // ───────────────────────────── sesión ─────────────────────────────
 //
-// Cookie firmada, sin base de sesiones: un solo usuario y un solo secreto.
-// La firma lleva la fecha de caducidad dentro, así que una cookie vieja no
-// sirve aunque alguien la guarde.
+// Cookie firmada, sin tabla de sesiones. Dentro va QUIÉN entró y con qué rol,
+// y la firma cubre todo el paquete: cambiar el rol dentro de la cookie la
+// invalida. La caducidad también va firmada, así que una cookie guardada no
+// sirve pasada la jornada.
 
-const firmar = (hasta) =>
-  `${hasta}.${crypto.createHmac('sha256', SECRETO).update(String(hasta)).digest('hex')}`;
+const firmar = (datos) => {
+  const cuerpo = Buffer.from(JSON.stringify(datos)).toString('base64url');
+  return `${cuerpo}.${crypto.createHmac('sha256', SECRETO).update(cuerpo).digest('hex')}`;
+};
 
-function sesionValida(cookie) {
-  if (!cookie) return false;
-  const [hasta, firma] = String(cookie).split('.');
-  if (!hasta || !firma) return false;
-  const esperada = crypto.createHmac('sha256', SECRETO).update(hasta).digest('hex');
+function abrirSesion(cookie) {
+  if (!cookie) return null;
+  const corte = String(cookie).lastIndexOf('.');
+  if (corte < 1) return null;
+  const cuerpo = String(cookie).slice(0, corte);
+  const firma = String(cookie).slice(corte + 1);
+  const esperada = crypto.createHmac('sha256', SECRETO).update(cuerpo).digest('hex');
   // timingSafeEqual exige mismo largo: una firma truncada no debe tirar excepción
-  if (firma.length !== esperada.length) return false;
-  if (!crypto.timingSafeEqual(Buffer.from(firma), Buffer.from(esperada))) return false;
-  return Number(hasta) > Date.now();
+  if (firma.length !== esperada.length) return null;
+  if (!crypto.timingSafeEqual(Buffer.from(firma), Buffer.from(esperada))) return null;
+  try {
+    const sesion = JSON.parse(Buffer.from(cuerpo, 'base64url').toString('utf8'));
+    return Number(sesion.hasta) > Date.now() ? sesion : null;
+  } catch {
+    return null;
+  }
 }
 
 const leerCookie = (req, nombre) =>
@@ -55,20 +66,56 @@ const leerCookie = (req, nombre) =>
     .map((c) => c.trim().split('='))
     .find(([k]) => k === nombre)?.[1];
 
-app.post('/api/entrar', (req, res) => {
-  const dada = String(req.body?.clave || '');
-  const ok =
-    dada.length === CLAVE.length &&
-    crypto.timingSafeEqual(Buffer.from(dada), Buffer.from(CLAVE));
-  if (!ok) {
-    // Demora fija ante el fallo: hace cara la fuerza bruta sin castigar al
-    // que simplemente se equivocó al teclear.
-    return setTimeout(() => res.status(401).json({ error: 'Clave incorrecta' }), 700);
-  }
-  const hasta = Date.now() + 12 * 60 * 60 * 1000; // la jornada
-  res.setHeader('Set-Cookie',
-    `pd_panel=${firmar(hasta)}; Path=/; HttpOnly; SameSite=Strict; Secure; Max-Age=43200`);
-  res.json({ ok: true });
+const JORNADA = 12 * 60 * 60 * 1000;
+
+const ponerCookie = (res, sesion) => res.setHeader('Set-Cookie',
+  `pd_panel=${firmar(sesion)}; Path=/; HttpOnly; SameSite=Strict; Secure; Max-Age=${JORNADA / 1000}`);
+
+/** La clave maestra, comparada en tiempo constante. */
+const esMaestra = (dada) => Boolean(CLAVE)
+  && dada.length === CLAVE.length
+  && crypto.timingSafeEqual(Buffer.from(dada), Buffer.from(CLAVE));
+
+/**
+ * Entrar: con correo y clave de un usuario, o con la clave maestra sola.
+ *
+ * La maestra NO se retira al crear usuarios, a propósito. Si se retirara, un
+ * fallo en la tabla de usuarios —o alguien que se borre a sí mismo— dejaría a
+ * la casa fuera de su propio panel sin forma de volver a entrar.
+ */
+app.post('/api/entrar', async (req, res, sig) => {
+  try {
+    const correo = String(req.body?.correo || '').trim().toLowerCase();
+    const clave = String(req.body?.clave || '');
+    let quien = null;
+
+    if (correo) {
+      // Si la tabla de usuarios todavía no existe (esquema sin aplicar), esto
+      // falla: se deja pasar a la clave maestra en vez de tumbar la entrada.
+      const filas = await bd.listar('pd_usuarios',
+        `correo=eq.${encodeURIComponent(correo)}&select=*&limit=1`).catch(() => []);
+      const u = filas?.[0];
+      if (u && u.activo && verificar(clave, u.clave)) {
+        quien = { id: u.id, nombre: u.nombre, correo: u.correo, rol: u.rol };
+        // Anotar la hora no debe poder impedir la entrada.
+        bd.actualizar('pd_usuarios', u.id,
+          { ultimo_acceso: new Date().toISOString() }).catch(() => {});
+      }
+    } else if (esMaestra(clave)) {
+      quien = { id: 'maestra', nombre: 'Clave maestra', correo: '', rol: 'admin' };
+    }
+
+    if (!quien) {
+      // Demora fija ante el fallo: hace cara la fuerza bruta sin castigar al
+      // que simplemente se equivocó al teclear. Y el mensaje no distingue
+      // entre "ese correo no existe" y "la clave está mal".
+      return setTimeout(() => res.status(401).json({ error: 'Correo o clave incorrectos' }), 700);
+    }
+
+    const sesion = { ...quien, hasta: Date.now() + JORNADA };
+    ponerCookie(res, sesion);
+    res.json({ ok: true, yo: quien });
+  } catch (e) { sig(e); }
 });
 
 app.post('/api/salir', (_req, res) => {
@@ -80,9 +127,97 @@ app.get('/api/salud', async (_req, res) => {
   res.json({ ok: true, base: await baseViva() });
 });
 
+// ──────────────────────────── permisos ────────────────────────────
+
 app.use('/api', (req, res, siguiente) => {
-  if (sesionValida(leerCookie(req, 'pd_panel'))) return siguiente();
-  res.status(401).json({ error: 'sin sesión' });
+  const sesion = abrirSesion(leerCookie(req, 'pd_panel'));
+  if (!sesion) return res.status(401).json({ error: 'sin sesión' });
+  req.yo = sesion;
+  siguiente();
+});
+
+// Un lector mira y descarga; no escribe. Se controla por método y no ruta por
+// ruta: así una ruta nueva queda protegida sin acordarse de protegerla.
+app.use('/api', (req, res, siguiente) => {
+  if (req.method !== 'GET' && req.yo.rol === 'lector') {
+    return res.status(403).json({ error: 'Tu cuenta es de solo lectura.' });
+  }
+  siguiente();
+});
+
+/** Quién soy: con esto el panel decide qué pestañas y botones muestra. */
+app.get('/api/yo', (req, res) => res.json({
+  id: req.yo.id, nombre: req.yo.nombre, correo: req.yo.correo, rol: req.yo.rol,
+}));
+
+// ──────────────────────────── usuarios ────────────────────────────
+//
+// Solo un administrador. El panel además esconde la pestaña, pero esconder un
+// botón no es un permiso: quien sepa la ruta la llama igual.
+
+app.use('/api/usuarios', (req, res, siguiente) => {
+  if (req.yo.rol !== 'admin') {
+    return res.status(403).json({ error: 'Solo un administrador gestiona usuarios.' });
+  }
+  siguiente();
+});
+
+const listarUsuarios = () => bd.listar('pd_usuarios', 'select=*&order=activo.desc,nombre');
+
+/**
+ * Cuántos administradores activos quedarían si se aplicara este cambio.
+ *
+ * Es la comprobación que evita el accidente de verdad: quitarse el último
+ * admin y dejar la gestión de usuarios cerrada para todos.
+ */
+async function adminsTras(cambio) {
+  const todos = await listarUsuarios();
+  return todos.filter((u) => (u.id === cambio.id
+    ? cambio.rol === 'admin' && cambio.activo
+    : u.rol === 'admin' && u.activo)).length;
+}
+
+app.get('/api/usuarios', async (_req, res, sig) => {
+  try { res.json((await listarUsuarios()).map(publico)); } catch (e) { sig(e); }
+});
+
+app.post('/api/usuarios', async (req, res, sig) => {
+  try {
+    const fila = filaDesdeFormulario(req.body, { nuevo: true });
+    res.json(publico(await bd.crear('pd_usuarios', fila)));
+  } catch (e) { sig(e); }
+});
+
+app.put('/api/usuarios/:id', async (req, res, sig) => {
+  try {
+    const antes = await bd.uno('pd_usuarios', req.params.id);
+    if (!antes) return res.status(404).json({ error: 'ese usuario no existe' });
+
+    const fila = filaDesdeFormulario(req.body, { nuevo: false });
+    if (await adminsTras({ id: antes.id, rol: fila.rol, activo: fila.activo }) === 0) {
+      return res.status(409).json({
+        error: 'Quedaría sin ningún administrador activo. Nombra otro admin antes de cambiar este.',
+      });
+    }
+    res.json(publico(await bd.actualizar('pd_usuarios', antes.id, fila)));
+  } catch (e) { sig(e); }
+});
+
+app.delete('/api/usuarios/:id', async (req, res, sig) => {
+  try {
+    if (req.params.id === req.yo.id) {
+      return res.status(409).json({ error: 'No puedes borrar tu propia cuenta.' });
+    }
+    const u = await bd.uno('pd_usuarios', req.params.id);
+    if (!u) return res.status(404).json({ error: 'ese usuario no existe' });
+    if (await adminsTras({ id: u.id, rol: null, activo: false }) === 0) {
+      return res.status(409).json({
+        error: 'Es el último administrador activo. Nombra otro antes de borrarlo.',
+      });
+    }
+    await bd.borrar('pd_usuarios', u.id);
+    res.json({ ok: true });
+  } catch (e) { sig(e); }
 });
 
 // ──────────────────────────── eventos ────────────────────────────
@@ -106,7 +241,7 @@ app.get('/api/eventos', async (_req, res, sig) => {
     // Una pasada por tabla en vez de una por evento: con 50 eventos, lo otro
     // son 150 viajes a la base.
     const [pres, movs, cobs] = await Promise.all([
-      bd.listar('pd_presupuesto', 'select=evento_id,tipo,cantidad,valor_unitario'),
+      bd.listar('pd_presupuesto', 'select=evento_id,tipo,cantidad,dias,valor_unitario'),
       bd.listar('pd_movimientos', 'select=evento_id,tipo,valor'),
       bd.listar('pd_cobros', 'select=evento_id,valor,pagado,vence'),
     ]);
@@ -312,11 +447,13 @@ app.post('/api/cotizaciones/:id/a-evento', async (req, res, sig) => {
     const evento = await bd.crear('pd_eventos', {
       nombre: cot.titulo, cliente: cot.cliente, estado: 'confirmado',
       fecha: req.body?.fecha || null,
+      fecha_fin: req.body?.fecha_fin || null,
       notas: `Desde la cotización ${cot.numero || cot.id}`,
     });
     await bd.crearVarias('pd_presupuesto', items.map((i, n) => ({
       evento_id: evento.id, tipo: 'ingreso', categoria: 'cotizado',
-      concepto: i.concepto, cantidad: i.cantidad, valor_unitario: i.valor_unitario,
+      concepto: i.concepto, cantidad: i.cantidad, dias: Number(i.dias) || 1,
+      valor_unitario: i.valor_unitario, fecha: req.body?.fecha || null,
       nota: i.detalle || null, orden: n,
     })));
     await bd.actualizar('pd_cotizaciones', cot.id, { estado: 'aprobada', evento_id: evento.id });

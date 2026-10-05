@@ -10,7 +10,7 @@
 // "listo" y se comió tres líneas es peor que una que falla entera.
 
 import ExcelJS from 'exceljs';
-import { totalLinea, resumen as calcularResumen, porCategoria } from './calculos.js';
+import { totalLinea, dias as diasLinea, resumen as calcularResumen, porCategoria } from './calculos.js';
 
 const MARCA = { argb: 'FF0B0F1A' };
 const TINTA = { argb: 'FFFFFFFF' };
@@ -29,6 +29,7 @@ const COLUMNAS = {
   categoria: ['categoria', 'rubro', 'area'],
   concepto: ['concepto', 'descripcion', 'detalle', 'item'],
   cantidad: ['cantidad', 'cant', 'qty'],
+  dias: ['dias', 'd', 'num dias', 'numero de dias', 'cantidad de dias', 'noches', 'jornadas'],
   valor_unitario: ['valor unitario', 'valor unit', 'unitario', 'precio', 'vr unitario'],
   valor: ['valor', 'total', 'monto', 'importe'],
   proveedor: ['proveedor', 'tercero'],
@@ -78,6 +79,20 @@ const leerFecha = (v) => {
   return isNaN(d) ? null : d.toISOString().slice(0, 10);
 };
 
+/** Días que dura un evento, contando el primero y el último. */
+export function diasEvento(evento) {
+  if (!evento?.fecha) return 1;
+  if (!evento.fecha_fin || evento.fecha_fin <= evento.fecha) return 1;
+  const ms = new Date(`${evento.fecha_fin}T12:00:00`) - new Date(`${evento.fecha}T12:00:00`);
+  return Math.round(ms / 86400000) + 1;
+}
+
+const rangoFechas = (e) => {
+  if (!e?.fecha) return '';
+  const d = diasEvento(e);
+  return d > 1 ? `${e.fecha} a ${e.fecha_fin} (${d} días)` : e.fecha;
+};
+
 // ───────────────────────────── exportar ─────────────────────────────
 
 function encabezar(hoja, titulos, anchos) {
@@ -103,7 +118,9 @@ export async function exportarEvento(datos) {
   const res = libro.addWorksheet('Resumen');
   res.columns = [{ width: 32 }, { width: 20 }, { width: 20 }, { width: 20 }];
   res.addRow([evento.nombre || 'Evento']).font = { bold: true, size: 16 };
-  res.addRow([`${evento.cliente || ''}${evento.sede ? ' · ' + evento.sede : ''}${evento.fecha ? ' · ' + evento.fecha : ''}`]);
+  res.addRow([[
+    evento.cliente || '', evento.sede || '', rangoFechas(evento),
+  ].filter(Boolean).join(' · ')]);
   res.addRow([]);
   res.addRow(['', 'Proyectado', 'Real', 'Diferencia']).font = { bold: true };
   const linea = (nombre, plan, real) => {
@@ -145,13 +162,15 @@ export async function exportarEvento(datos) {
 
   // ── Presupuesto ──
   const pre = libro.addWorksheet('Presupuesto');
-  encabezar(pre, ['Tipo', 'Categoría', 'Concepto', 'Cantidad', 'Valor unitario', 'Total', 'Proveedor', 'Nota'],
-    [10, 18, 42, 10, 16, 16, 22, 30]);
+  encabezar(pre, ['Fecha', 'Tipo', 'Categoría', 'Concepto', 'Cantidad', 'Días',
+    'Valor unitario', 'Total', 'Proveedor', 'Nota'],
+    [12, 10, 18, 40, 10, 8, 16, 16, 22, 28]);
   presupuesto.forEach((l) => {
-    const f = pre.addRow([l.tipo, l.categoria || '', l.concepto, Number(l.cantidad) || 0,
-      Number(l.valor_unitario) || 0, totalLinea(l), l.proveedor || '', l.nota || '']);
-    f.getCell(5).numFmt = MONEDA;
-    f.getCell(6).numFmt = MONEDA;
+    const f = pre.addRow([l.fecha || '', l.tipo, l.categoria || '', l.concepto,
+      Number(l.cantidad) || 0, diasLinea(l), Number(l.valor_unitario) || 0, totalLinea(l),
+      l.proveedor || '', l.nota || '']);
+    f.getCell(7).numFmt = MONEDA;
+    f.getCell(8).numFmt = MONEDA;
   });
 
   // ── Real ──
@@ -183,16 +202,18 @@ export async function exportarEventos(filas) {
   const libro = new ExcelJS.Workbook();
   libro.creator = 'Persistencia Digital';
   const h = libro.addWorksheet('Eventos');
-  encabezar(h, ['Evento', 'Cliente', 'Fecha', 'Estado', 'Ingreso proy.', 'Gasto proy.',
-    'Utilidad proy.', 'Margen proy.', 'Ingreso real', 'Gasto real', 'Utilidad real',
+  encabezar(h, ['Evento', 'Cliente', 'Desde', 'Hasta', 'Días', 'Estado',
+    'Ingreso proy.', 'Gasto proy.', 'Utilidad proy.', 'Margen proy.',
+    'Ingreso real', 'Gasto real', 'Utilidad real',
     'Facturado', 'Pagado', 'Por cobrar'],
-    [34, 22, 12, 12, 15, 15, 15, 12, 15, 15, 15, 15, 15, 15]);
+    [34, 22, 12, 12, 8, 12, 15, 15, 15, 12, 15, 15, 15, 15, 15, 15]);
   filas.forEach(({ evento, resumen: r }) => {
-    const f = h.addRow([evento.nombre, evento.cliente || '', evento.fecha || '', evento.estado,
+    const f = h.addRow([evento.nombre, evento.cliente || '', evento.fecha || '',
+      evento.fecha_fin || '', diasEvento(evento), evento.estado,
       r.ingresoPlan, r.gastoPlan, r.utilidadPlan, r.margenPlan,
       r.ingresoReal, r.gastoReal, r.utilidadReal, r.facturado, r.pagado, r.porCobrar]);
-    [5, 6, 7, 9, 10, 11, 12, 13, 14].forEach((i) => (f.getCell(i).numFmt = MONEDA));
-    f.getCell(8).numFmt = '0.0%';
+    [7, 8, 9, 11, 12, 13, 14, 15, 16].forEach((i) => (f.getCell(i).numFmt = MONEDA));
+    f.getCell(10).numFmt = '0.0%';
   });
   return Buffer.from(await libro.xlsx.writeBuffer());
 }
@@ -245,14 +266,17 @@ export async function importarEvento(buffer) {
     if (!tipo) return null;
     let unitario = leerNumero(v('valor_unitario'));
     const cantidad = leerNumero(v('cantidad')) || 1;
-    // Si solo vino el total, se reparte: es lo que hace una hoja hecha a mano.
+    const dias = leerNumero(v('dias')) || 1;
+    // Si solo vino el total, se reparte entre cantidad y días: es lo que hace
+    // una hoja armada a mano, donde se escribe la cifra final y nada más.
     if (!unitario) {
       const total = leerNumero(v('valor'));
-      if (total) unitario = total / cantidad;
+      if (total) unitario = total / (cantidad * dias);
     }
     return {
       tipo, concepto, categoria: leerTexto(v('categoria')) || null,
-      cantidad, valor_unitario: unitario,
+      cantidad, dias, valor_unitario: unitario,
+      fecha: leerFecha(v('fecha')),
       proveedor: leerTexto(v('proveedor')) || null, nota: leerTexto(v('nota')) || null,
       orden: n,
     };

@@ -6,7 +6,12 @@
 
 const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
-export const totalLinea = (l) => num(l.cantidad) * num(l.valor_unitario);
+// Los días cuentan: dos pantallas durante tres días son seis días de alquiler.
+// Si falta o viene en cero se toma 1, para que las líneas de antes de que
+// existiera la columna sigan sumando lo mismo.
+export const dias = (l) => num(l.dias) || 1;
+
+export const totalLinea = (l) => num(l.cantidad) * dias(l) * num(l.valor_unitario);
 
 /**
  * El resumen de un evento: lo proyectado, lo ejecutado, la desviación y la

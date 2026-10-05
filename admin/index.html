@@ -9,20 +9,31 @@
 <link rel="icon" href="/assets/isotipo.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/admin/panel.css">
 </head>
 <body>
 
 <!-- ───────────────────────── entrada ───────────────────────── -->
 <section id="puerta" class="puerta">
-  <form id="formEntrar" class="tarjeta-entrada">
+  <form id="formEntrar" class="tarjeta-entrada" autocomplete="on">
     <div class="marca"><span>Persistencia Digital</span></div>
     <h1>Panel</h1>
     <p class="dim">Presupuestos, ejecución y cotizaciones.</p>
-    <input type="password" id="clave" placeholder="clave" autocomplete="current-password" required>
-    <button type="submit">Entrar</button>
-    <p id="errorEntrar" class="error"></p>
+
+    <div class="campo">
+      <label for="correo">Correo</label>
+      <input type="email" id="correo" name="correo" autocomplete="username"
+             placeholder="tu@persistenciadigital.com" autocapitalize="off" spellcheck="false">
+      <span class="pista">Déjalo vacío para entrar con la clave maestra.</span>
+    </div>
+    <div class="campo">
+      <label for="clave">Clave</label>
+      <input type="password" id="clave" name="clave" autocomplete="current-password" required>
+    </div>
+
+    <button type="submit" class="boton grande" id="botonEntrar">Entrar</button>
+    <p id="errorEntrar" class="error" role="alert"></p>
   </form>
 </section>
 
@@ -33,17 +44,25 @@
     <nav>
       <button class="pestana activa" data-vista="eventos">Eventos</button>
       <button class="pestana" data-vista="cotizaciones">Cotizaciones</button>
+      <button class="pestana" data-vista="usuarios" id="pestanaUsuarios" hidden>Usuarios</button>
     </nav>
+    <div class="yo">
+      <span class="quien" id="yoNombre"></span>
+      <span class="marbete" id="yoRol"></span>
+    </div>
     <button id="salir" class="plano">Salir</button>
   </header>
 
   <!-- lista de eventos -->
   <main id="vista-eventos" class="vista">
     <div class="cabecera-vista">
-      <h2>Eventos</h2>
+      <div>
+        <h2>Eventos</h2>
+        <p class="dim">Lo proyectado contra lo que de verdad pasó.</p>
+      </div>
       <div class="acciones">
-        <a class="boton plano" href="/api/excel">Descargar todo en Excel</a>
-        <button class="boton" id="nuevoEvento">Nuevo evento</button>
+        <a class="plano" href="/api/excel">Descargar todo en Excel</a>
+        <button class="boton" id="nuevoEvento" data-escribe>Nuevo evento</button>
       </div>
     </div>
     <div id="totalesGlobales" class="tiras"></div>
@@ -52,18 +71,18 @@
 
   <!-- ficha de un evento -->
   <main id="vista-evento" class="vista" hidden>
-    <button class="plano volver" data-vista="eventos">← Eventos</button>
+    <button class="volver" data-vista="eventos">← Eventos</button>
     <div class="cabecera-vista">
       <div>
         <h2 id="evNombre"></h2>
         <p class="dim" id="evMeta"></p>
       </div>
       <div class="acciones">
-        <a class="boton plano" id="evExcel" href="#">Excel</a>
-        <label class="boton plano">
-          Importar Excel<input type="file" id="evImportar" accept=".xlsx" hidden>
-        </label>
-        <button class="boton plano" id="evEditar">Datos</button>
+        <a class="plano" id="evExcel" href="#">Descargar Excel</a>
+        <button class="plano" id="evImportarBoton" data-escribe>Importar Excel</button>
+        <input type="file" id="evImportar" accept=".xlsx" hidden>
+        <button class="plano" id="evEditar" data-escribe>Datos del evento</button>
+        <button class="plano peligro" id="evBorrar" data-escribe>Borrar</button>
       </div>
     </div>
 
@@ -72,30 +91,44 @@
 
     <section class="bloque">
       <div class="cabecera-bloque">
-        <h3>Presupuesto <span class="dim">— lo proyectado</span></h3>
-        <button class="plano" data-agregar="presupuesto">+ línea</button>
+        <div>
+          <h3>Presupuesto</h3>
+          <p class="dim">Lo proyectado. El total es cantidad × días × valor unitario.</p>
+        </div>
+        <button class="plano" data-agregar="presupuesto" data-escribe>+ línea</button>
       </div>
       <div id="tablaPresupuesto"></div>
     </section>
 
     <section class="bloque">
       <div class="cabecera-bloque">
-        <h3>Real <span class="dim">— lo que de verdad entró y salió</span></h3>
-        <button class="plano" data-agregar="movimientos">+ movimiento</button>
+        <div>
+          <h3>Real</h3>
+          <p class="dim">Lo que de verdad entró y salió.</p>
+        </div>
+        <button class="plano" data-agregar="movimientos" data-escribe>+ movimiento</button>
       </div>
       <div id="tablaMovimientos"></div>
     </section>
 
     <section class="bloque">
       <div class="cabecera-bloque">
-        <h3>Cobros <span class="dim">— facturado y pagado</span></h3>
-        <button class="plano" data-agregar="cobros">+ cobro</button>
+        <div>
+          <h3>Cobros</h3>
+          <p class="dim">Facturado y pagado.</p>
+        </div>
+        <button class="plano" data-agregar="cobros" data-escribe>+ cobro</button>
       </div>
       <div id="tablaCobros"></div>
     </section>
 
     <section class="bloque">
-      <h3>Gasto por categoría</h3>
+      <div class="cabecera-bloque">
+        <div>
+          <h3>Gasto por categoría</h3>
+          <p class="dim">Dónde se desvió, y qué se gastó sin presupuestar.</p>
+        </div>
+      </div>
       <div id="tablaCategorias"></div>
     </section>
   </main>
@@ -103,28 +136,57 @@
   <!-- cotizaciones -->
   <main id="vista-cotizaciones" class="vista" hidden>
     <div class="cabecera-vista">
-      <h2>Cotizaciones</h2>
-      <button class="boton" id="nuevaCotizacion">Nueva cotización</button>
+      <div>
+        <h2>Cotizaciones</h2>
+        <p class="dim">Se llenan, se imprimen y, si las aprueban, se vuelven evento.</p>
+      </div>
+      <button class="boton" id="nuevaCotizacion" data-escribe>Nueva cotización</button>
     </div>
     <div id="listaCotizaciones" class="lista"></div>
   </main>
 
   <!-- editor de cotización -->
   <main id="vista-cotizacion" class="vista" hidden>
-    <button class="plano volver" data-vista="cotizaciones">← Cotizaciones</button>
+    <button class="volver" data-vista="cotizaciones">← Cotizaciones</button>
     <div class="cabecera-vista">
-      <h2>Cotización</h2>
+      <div>
+        <h2>Cotización</h2>
+        <p class="dim" id="cotEstado"></p>
+      </div>
       <div class="acciones">
-        <a class="boton plano" id="cotVer" href="#" target="_blank" rel="noopener">Ver / imprimir</a>
-        <button class="boton plano" id="cotAEvento">Aprobada → evento</button>
-        <button class="boton" id="cotGuardar">Guardar</button>
+        <a class="plano" id="cotVer" href="#" target="_blank" rel="noopener">Ver / imprimir</a>
+        <button class="plano" id="cotAEvento" data-escribe>Aprobada → evento</button>
+        <button class="boton" id="cotGuardar" data-escribe>Guardar</button>
       </div>
     </div>
     <div id="cotFormulario"></div>
   </main>
+
+  <!-- usuarios -->
+  <main id="vista-usuarios" class="vista" hidden>
+    <div class="cabecera-vista">
+      <div>
+        <h2>Usuarios</h2>
+        <p class="dim">Quién entra al panel y qué puede hacer.</p>
+      </div>
+      <button class="boton" id="nuevoUsuario">Nuevo usuario</button>
+    </div>
+    <div id="notaUsuarios"></div>
+    <div class="bloque" id="bloqueUsuarios">
+      <div id="tablaUsuarios"></div>
+    </div>
+    <p class="dim pie-nota">
+      <strong>admin</strong> hace todo, incluidos los usuarios ·
+      <strong>editor</strong> todo menos los usuarios ·
+      <strong>lector</strong> solo mira y descarga.
+    </p>
+  </main>
 </div>
 
-<div id="aviso" class="aviso" hidden></div>
+<!-- Un solo diálogo para todo: lo que lleva dentro lo arma el JS. -->
+<dialog id="dialogo"></dialog>
+<div id="avisos" class="avisos" aria-live="polite"></div>
+
 <script src="/admin/panel.js" type="module"></script>
 </body>
 </html>

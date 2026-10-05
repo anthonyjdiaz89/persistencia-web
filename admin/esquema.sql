@@ -135,3 +135,53 @@ alter table pd_cotizacion_items enable row level security;
 revoke all on pd_eventos, pd_presupuesto, pd_movimientos,
               pd_cobros, pd_cotizaciones, pd_cotizacion_items
        from anon;
+
+-- ═══════════════════ 2026-10-05 · fechas, días y usuarios ═══════════════════
+--
+-- Todo lo de abajo se añadió sobre el esquema ya desplegado. Se usa
+-- `add column if not exists` en vez de reescribir las tablas: en producción ya
+-- hay datos y un `create table` nuevo los perdería.
+
+-- Un evento puede durar varios días: la fecha de arriba es el primer día.
+alter table pd_eventos add column if not exists fecha_fin date;
+
+-- La fecha de una línea NO va dentro del concepto. Escribir «Montaje 14 de
+-- marzo» en el texto es lo que obliga después a leer a mano para saber qué se
+-- gasta cada día, y no se puede ordenar ni sumar por fecha.
+alter table pd_presupuesto add column if not exists fecha date;
+
+-- Días que dura esa línea. El total es cantidad × días × valor unitario: dos
+-- pantallas durante tres días son seis días de alquiler, y antes había que
+-- hacer esa multiplicación de cabeza y escribir el resultado en la cantidad.
+alter table pd_presupuesto      add column if not exists dias numeric not null default 1;
+alter table pd_cotizacion_items add column if not exists dias numeric not null default 1;
+
+-- ───────────────────────────── usuarios ─────────────────────────────
+--
+-- Hasta ahora el panel entraba con una sola clave compartida. Eso no dice
+-- quién tocó qué y obliga a cambiársela a todos cuando se va una persona.
+--
+-- La clave se guarda con scrypt y sal por usuario: lo que hay en la columna no
+-- sirve para entrar. CLAVE_ADMIN sigue valiendo como clave maestra —si no
+-- siguiera valiendo, un error en esta tabla dejaría a la casa fuera de su
+-- propio panel.
+--
+--   admin  → todo, incluidos los usuarios
+--   editor → todo menos los usuarios
+--   lector → solo mirar y descargar; no escribe nada
+
+create table if not exists pd_usuarios (
+    id            uuid primary key default gen_random_uuid(),
+    nombre        text not null,
+    correo        text not null unique,
+    rol           text not null default 'editor'
+                  check (rol in ('admin', 'editor', 'lector')),
+    -- scrypt: "s1$N$sal$hash". Nunca sale de esta tabla hacia el navegador.
+    clave         text not null,
+    activo        boolean not null default true,
+    creado        timestamptz not null default now(),
+    ultimo_acceso timestamptz
+);
+
+alter table pd_usuarios enable row level security;
+revoke all on pd_usuarios from anon, authenticated;

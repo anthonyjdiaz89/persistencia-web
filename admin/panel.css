@@ -2,12 +2,13 @@
    no parecería de la misma casa. */
 
 :root{
-  --bg:#060609; --elev:#0c0c14; --elev2:#11111c;
-  --fg:#f4f5fa; --muted:#a8adc0; --dim:#6f7488;
+  --bg:#060609; --elev:#0c0c14; --elev2:#11111c; --elev3:#171724;
+  --fg:#f4f5fa; --muted:#a8adc0; --dim:#767b90;
   --cyan:#4deeea; --purple:#7b4de0; --blue:#3d5afe; --magenta:#d94de8;
-  --linea:#1c1c28;
+  --linea:#1c1c28; --linea2:#262635;
   --bien:#4ade80; --mal:#f87171; --ojo:#fbbf24;
-  --radio:12px;
+  --radio:14px; --radio-chico:9px;
+  --sombra:0 18px 50px rgba(0,0,0,.55);
 }
 
 *{box-sizing:border-box}
@@ -15,133 +16,260 @@
    HTML y el elemento sigue visible aunque el DOM diga que está oculto.
    Pasó con .puerta{display:grid}: el panel cargaba detrás del login. */
 [hidden]{display:none !important}
-html,body{margin:0; background:var(--bg); color:var(--fg);
-  font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif; font-size:14px}
+
+html{-webkit-text-size-adjust:100%}
+body{margin:0; background:var(--bg); color:var(--fg);
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-size:14px; line-height:1.5;
+  font-variant-numeric:tabular-nums;   /* las cifras no bailan al cambiar */
+  -webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit; color:inherit}
 a{color:inherit; text-decoration:none}
+::selection{background:var(--purple); color:#fff}
+
+/* Foco visible siempre: se navega con teclado por las tablas. */
+:focus-visible{outline:2px solid var(--cyan); outline-offset:2px}
 
 .marca{font-weight:800; letter-spacing:.14em; font-size:12px; text-transform:uppercase}
 .marca span{background:linear-gradient(90deg,var(--cyan),var(--purple));
   -webkit-background-clip:text; background-clip:text; color:transparent}
 .dim{color:var(--dim)}
-.error{color:var(--mal); min-height:20px; margin:8px 0 0; font-size:13px}
+.error{color:var(--mal); min-height:20px; margin:10px 0 0; font-size:13px}
+.pie-nota{font-size:12.5px; margin:14px 2px 0}
 
 /* ───────────────────────── entrada ───────────────────────── */
-.puerta{min-height:100vh; display:grid; place-items:center; padding:24px}
-.tarjeta-entrada{width:100%; max-width:340px; background:var(--elev);
-  border:1px solid var(--linea); border-radius:16px; padding:32px}
-.tarjeta-entrada h1{margin:14px 0 4px; font-size:26px; letter-spacing:-.02em}
-.tarjeta-entrada p{margin:0 0 20px; font-size:13px}
-.tarjeta-entrada input{width:100%; padding:13px 14px; background:var(--bg);
-  border:1px solid var(--linea); border-radius:10px; margin-bottom:12px}
-.tarjeta-entrada input:focus{outline:none; border-color:var(--cyan)}
-.tarjeta-entrada button{width:100%; padding:13px; border:0; border-radius:10px;
-  background:var(--cyan); color:#04121a; font-weight:700; cursor:pointer}
+
+.puerta{min-height:100vh; display:grid; place-items:center; padding:24px;
+  background:
+    radial-gradient(900px 500px at 15% -10%, rgba(123,77,224,.16), transparent 70%),
+    radial-gradient(700px 420px at 100% 110%, rgba(77,238,234,.10), transparent 70%)}
+.tarjeta-entrada{width:100%; max-width:368px; background:var(--elev);
+  border:1px solid var(--linea); border-radius:18px; padding:34px 32px 30px;
+  box-shadow:var(--sombra)}
+.tarjeta-entrada h1{margin:14px 0 4px; font-size:27px; letter-spacing:-.025em}
+.tarjeta-entrada > p{margin:0 0 24px; font-size:13px}
+.tarjeta-entrada .campo{margin-bottom:14px}
 
 /* ───────────────────────── armazón ───────────────────────── */
-.barra{position:sticky; top:0; z-index:10; display:flex; align-items:center;
-  gap:20px; padding:14px 24px; background:rgba(6,6,9,.88);
-  backdrop-filter:blur(10px); border-bottom:1px solid var(--linea)}
-.barra nav{display:flex; gap:4px; margin-left:12px}
-.pestana{background:none; border:0; padding:8px 14px; border-radius:8px;
-  color:var(--dim); cursor:pointer; font-weight:500}
-.pestana:hover{color:var(--fg)}
+
+.barra{position:sticky; top:0; z-index:20; display:flex; align-items:center;
+  gap:16px; padding:13px 24px; background:rgba(6,6,9,.86);
+  backdrop-filter:blur(14px); border-bottom:1px solid var(--linea)}
+.barra nav{display:flex; gap:3px; margin-left:10px}
+.pestana{background:none; border:0; padding:8px 14px; border-radius:var(--radio-chico);
+  color:var(--dim); cursor:pointer; font-weight:500; white-space:nowrap}
+.pestana:hover{color:var(--fg); background:var(--elev)}
 .pestana.activa{background:var(--elev2); color:var(--fg)}
-#salir{margin-left:auto}
+.yo{margin-left:auto; display:flex; align-items:center; gap:8px; min-width:0}
+.yo .quien{font-size:13px; color:var(--muted); overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap; max-width:30vw}
 
-.vista{max-width:1180px; margin:0 auto; padding:24px}
+.vista{max-width:1240px; margin:0 auto; padding:26px 24px 70px}
 .cabecera-vista{display:flex; justify-content:space-between; align-items:flex-end;
-  gap:16px; flex-wrap:wrap; margin-bottom:20px}
-.cabecera-vista h2{margin:0; font-size:24px; letter-spacing:-.02em}
-.cabecera-vista p{margin:4px 0 0; font-size:13px}
-.acciones{display:flex; gap:8px; flex-wrap:wrap}
-.volver{margin-bottom:14px}
+  gap:18px; flex-wrap:wrap; margin-bottom:20px}
+.cabecera-vista h2{margin:0; font-size:25px; letter-spacing:-.025em}
+.cabecera-vista p{margin:5px 0 0; font-size:13px}
+.acciones{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
 
-.boton,.plano{padding:9px 15px; border-radius:9px; border:1px solid transparent;
-  cursor:pointer; font-weight:600; font-size:13px; display:inline-block}
+.volver{background:none; border:0; color:var(--dim); cursor:pointer;
+  padding:6px 0; margin-bottom:10px; font-weight:500}
+.volver:hover{color:var(--fg)}
+
+/* ───────────────────────── botones ───────────────────────── */
+
+.boton,.plano{padding:9px 16px; border-radius:var(--radio-chico);
+  border:1px solid transparent; cursor:pointer; font-weight:600; font-size:13px;
+  display:inline-flex; align-items:center; gap:7px; white-space:nowrap;
+  transition:background .12s, border-color .12s, transform .06s}
 .boton{background:var(--cyan); color:#04121a}
-.plano{background:var(--elev2); color:var(--fg); border-color:var(--linea)}
-.plano:hover{border-color:var(--dim)}
-label.boton{cursor:pointer}
+.boton:hover{background:#6af4f0}
+.plano{background:var(--elev2); color:var(--fg); border-color:var(--linea2)}
+.plano:hover{background:var(--elev3); border-color:var(--dim)}
+.boton:active,.plano:active{transform:translateY(1px)}
+.boton[disabled],.plano[disabled]{opacity:.45; cursor:not-allowed; transform:none}
+.grande{width:100%; justify-content:center; padding:12px}
+.peligro{color:var(--mal)}
+.peligro:hover{border-color:var(--mal); background:rgba(248,113,113,.10)}
+.boton.peligro{background:var(--mal); color:#1b0606; border-color:transparent}
+.boton.peligro:hover{background:#fa8a8a}
 
 /* ───────────────────── tiras de totales ───────────────────── */
-.tiras{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+
+.tiras{display:grid; grid-template-columns:repeat(auto-fit,minmax(176px,1fr));
   gap:10px; margin-bottom:22px}
 .tira{background:var(--elev); border:1px solid var(--linea);
-  border-radius:var(--radio); padding:14px 16px}
+  border-radius:var(--radio); padding:15px 17px}
 .tira .et{font-size:10.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--dim)}
-.tira .vl{font-size:21px; font-weight:800; letter-spacing:-.02em; margin-top:5px}
-.tira .pie{font-size:12px; color:var(--dim); margin-top:3px}
+.tira .vl{font-size:22px; font-weight:800; letter-spacing:-.03em; margin-top:6px}
+.tira .pie{font-size:12px; color:var(--dim); margin-top:4px}
 .bien{color:var(--bien)} .mal{color:var(--mal)} .ojo{color:var(--ojo)}
 
 /* ───────────────────────── listas ───────────────────────── */
+
 .lista{display:flex; flex-direction:column; gap:8px}
-.fila-evento{display:grid; grid-template-columns:1fr auto; gap:14px;
+.fila-evento{display:grid; grid-template-columns:1fr auto; gap:16px;
   background:var(--elev); border:1px solid var(--linea); border-radius:var(--radio);
-  padding:15px 18px; cursor:pointer; align-items:center}
-.fila-evento:hover{border-color:var(--dim)}
-.fila-evento h3{margin:0 0 3px; font-size:15.5px; font-weight:600}
+  padding:16px 19px; cursor:pointer; align-items:center; text-align:left;
+  width:100%; font:inherit; color:inherit;
+  transition:border-color .12s, background .12s}
+.fila-evento:hover{border-color:var(--linea2); background:var(--elev2)}
+.fila-evento h3{margin:0 0 4px; font-size:15.5px; font-weight:600}
 .fila-evento .sub{font-size:12.5px; color:var(--dim)}
-.cifras{display:flex; gap:22px; text-align:right; flex-wrap:wrap}
+.cifras{display:flex; gap:24px; text-align:right; flex-wrap:wrap}
 .cifras .c .et{font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim)}
-.cifras .c .vl{font-weight:700; font-size:14.5px; white-space:nowrap}
-.marbete{display:inline-block; font-size:10.5px; letter-spacing:.08em;
-  text-transform:uppercase; padding:3px 8px; border-radius:999px;
-  background:var(--elev2); color:var(--muted); border:1px solid var(--linea)}
+.cifras .c .vl{font-weight:700; font-size:14.5px; white-space:nowrap; margin-top:2px}
+
+.marbete{display:inline-flex; align-items:center; gap:5px; font-size:10.5px;
+  letter-spacing:.08em; text-transform:uppercase; padding:3px 9px;
+  border-radius:999px; background:var(--elev2); color:var(--muted);
+  border:1px solid var(--linea2); font-weight:600; white-space:nowrap}
+/* El estado se ve antes de leerlo. */
+.marbete.cotizado  {color:#c7cad8}
+.marbete.confirmado{color:var(--cyan);   border-color:rgba(77,238,234,.35);  background:rgba(77,238,234,.08)}
+.marbete.en_curso  {color:var(--ojo);    border-color:rgba(251,191,36,.35);  background:rgba(251,191,36,.08)}
+.marbete.cerrado   {color:var(--bien);   border-color:rgba(74,222,128,.32);  background:rgba(74,222,128,.08)}
+.marbete.perdido   {color:var(--mal);    border-color:rgba(248,113,113,.32); background:rgba(248,113,113,.08)}
+.marbete.aprobada  {color:var(--bien);   border-color:rgba(74,222,128,.32);  background:rgba(74,222,128,.08)}
+.marbete.enviada   {color:var(--cyan);   border-color:rgba(77,238,234,.35);  background:rgba(77,238,234,.08)}
+.marbete.admin     {color:var(--purple); border-color:rgba(123,77,224,.45);  background:rgba(123,77,224,.12)}
+.marbete.lector    {color:var(--dim)}
+.marbete.inactivo  {color:var(--mal);    border-color:rgba(248,113,113,.32)}
 
 /* ───────────────────────── bloques ───────────────────────── */
-.bloque{background:var(--elev); border:1px solid var(--linea);
-  border-radius:var(--radio); padding:18px; margin-bottom:16px}
-.cabecera-bloque{display:flex; justify-content:space-between; align-items:center;
-  gap:12px; margin-bottom:12px}
-.bloque h3{margin:0; font-size:15px; font-weight:600}
-.bloque h3 .dim{font-weight:400; font-size:13px}
 
-table{width:100%; border-collapse:collapse; font-size:13.5px}
+.bloque{background:var(--elev); border:1px solid var(--linea);
+  border-radius:var(--radio); padding:18px 20px; margin-bottom:16px}
+.cabecera-bloque{display:flex; justify-content:space-between; align-items:flex-start;
+  gap:14px; margin-bottom:14px; flex-wrap:wrap}
+.bloque h3{margin:0; font-size:15px; font-weight:600}
+.cabecera-bloque p{margin:3px 0 0; font-size:12.5px}
+.aviso-bloque{border-color:rgba(251,191,36,.45); background:rgba(251,191,36,.06);
+  display:flex; gap:11px; align-items:flex-start; padding:15px 18px}
+.aviso-bloque .icono{color:var(--ojo); font-weight:800}
+
+/* ───────────────────────── tablas ───────────────────────── */
+
+/* En móvil la tabla no se parte en columnas ilegibles: rueda en horizontal,
+   que es como se lee una hoja de cálculo. */
+.rueda{overflow-x:auto; margin:0 -20px; padding:0 20px;
+  scrollbar-width:thin; scrollbar-color:var(--linea2) transparent}
+table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:640px}
 th{text-align:left; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
-  color:var(--dim); font-weight:600; padding:0 8px 9px; border-bottom:1px solid var(--linea)}
-td{padding:4px 2px; border-bottom:1px solid var(--linea); vertical-align:middle}
+  color:var(--dim); font-weight:600; padding:0 8px 10px;
+  border-bottom:1px solid var(--linea2); white-space:nowrap}
+td{padding:3px 2px; border-bottom:1px solid var(--linea); vertical-align:middle}
+tbody tr:hover td{background:rgba(255,255,255,.015)}
 th.num,td.num{text-align:right}
-tfoot td{font-weight:700; border-bottom:0; padding-top:10px}
-.vacio{color:var(--dim); font-size:13px; padding:14px 2px}
+tfoot td{font-weight:700; border-bottom:0; padding-top:12px; color:var(--muted)}
+/* Que la cifra del pie caiga a plomo con la de la columna: los campos de
+   arriba tienen 8px de relleno y el pie llevaba 2. */
+tfoot td.num{padding-right:8px}
+tfoot tr.fuerte td{color:var(--fg)}
+.vacio{color:var(--dim); font-size:13px; padding:18px 2px; margin:0}
+.vacio strong{color:var(--muted); font-weight:600}
 
 /* celdas que se editan en el sitio: sin modales ni formularios aparte */
 td input,td select{width:100%; background:transparent; border:1px solid transparent;
-  border-radius:7px; padding:8px; min-width:0}
-td input:hover,td select:hover{border-color:var(--linea)}
+  border-radius:8px; padding:8px; min-width:0; transition:border-color .12s, background .12s}
+td input:hover,td select:hover{border-color:var(--linea2)}
 td input:focus,td select:focus{outline:none; border-color:var(--cyan); background:var(--bg)}
 td input.num{text-align:right}
-td select{background:var(--bg); border-color:var(--linea); min-width:98px}
+td input[type=date]{min-width:124px; color-scheme:dark}
+td select{background:var(--bg); border-color:var(--linea); min-width:100px; cursor:pointer}
+td input[readonly]{cursor:default}
+.corto{max-width:74px}
+/* Confirmación de guardado sin tener que repintar la tabla entera. */
+@keyframes guardado{from{border-color:var(--bien); background:rgba(74,222,128,.14)} to{}}
+.guardado{animation:guardado 1s ease-out}
 .quitar{background:none; border:0; color:var(--dim); cursor:pointer;
-  font-size:17px; line-height:1; padding:6px 8px; border-radius:7px}
-.quitar:hover{color:var(--mal); background:var(--elev2)}
+  font-size:18px; line-height:1; padding:6px 9px; border-radius:8px}
+.quitar:hover{color:var(--mal); background:rgba(248,113,113,.10)}
 .calc{color:var(--muted); white-space:nowrap; padding-right:8px}
+.celda-texto{padding:9px 8px}
 
-/* ───────────────────── editor de cotización ───────────────────── */
-.campos{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px}
+/* ───────────────────── formularios y campos ───────────────────── */
+
+.campos{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:13px}
 .campo label{display:block; font-size:10.5px; letter-spacing:.1em;
-  text-transform:uppercase; color:var(--dim); margin-bottom:5px}
+  text-transform:uppercase; color:var(--dim); margin-bottom:6px; font-weight:600}
 .campo input,.campo textarea,.campo select{width:100%; background:var(--bg);
-  border:1px solid var(--linea); border-radius:9px; padding:10px 12px}
-.campo input:focus,.campo textarea:focus{outline:none; border-color:var(--cyan)}
-.campo textarea{resize:vertical; min-height:76px; line-height:1.55}
+  border:1px solid var(--linea2); border-radius:10px; padding:11px 12px;
+  color-scheme:dark}
+.campo input:focus,.campo textarea:focus,.campo select:focus{
+  outline:none; border-color:var(--cyan)}
+.campo textarea{resize:vertical; min-height:80px; line-height:1.55}
 .campo.ancho{grid-column:1/-1}
+.campo .pista{display:block; font-size:12px; color:var(--dim); margin-top:6px}
+.campo select{cursor:pointer}
 .listado-simple{display:flex; flex-direction:column; gap:6px}
 .listado-simple .renglon{display:flex; gap:6px; align-items:center}
-.listado-simple input{flex:1}
+.listado-simple input{flex:1; background:var(--bg); border:1px solid var(--linea2);
+  border-radius:9px; padding:9px 11px}
+.listado-simple input:focus{outline:none; border-color:var(--cyan)}
+
+/* ───────────────────────── diálogo ───────────────────────── */
+
+dialog{border:0; padding:0; background:transparent; max-width:min(560px,94vw);
+  width:100%; color:var(--fg)}
+dialog::backdrop{background:rgba(2,2,6,.72); backdrop-filter:blur(3px)}
+.hoja-dialogo{background:var(--elev); border:1px solid var(--linea2);
+  border-radius:18px; padding:26px 26px 22px; box-shadow:var(--sombra)}
+.hoja-dialogo h3{margin:0; font-size:19px; letter-spacing:-.02em}
+.hoja-dialogo > p{margin:9px 0 0; color:var(--muted); font-size:13.5px; line-height:1.6}
+.hoja-dialogo .campos{margin-top:20px}
+.pies-dialogo{display:flex; justify-content:flex-end; gap:8px; margin-top:22px; flex-wrap:wrap}
+.pies-dialogo.apilado{flex-direction:column; align-items:stretch}
+.pies-dialogo.apilado .boton,.pies-dialogo.apilado .plano{justify-content:center; padding:12px}
+.error-dialogo{color:var(--mal); font-size:13px; margin:14px 0 0; min-height:0}
+/* Lo irreversible se dice con palabras antes de ofrecer el botón. */
+.ojo-dialogo{margin-top:16px; padding:13px 15px; border-radius:11px;
+  background:rgba(251,191,36,.07); border:1px solid rgba(251,191,36,.35);
+  color:var(--muted); font-size:13px; line-height:1.55}
 
 /* ───────────────────────── avisos ───────────────────────── */
-.aviso{position:fixed; left:50%; bottom:26px; transform:translateX(-50%);
-  background:var(--elev2); border:1px solid var(--linea); border-radius:11px;
-  padding:13px 20px; max-width:min(560px,92vw); z-index:50;
-  box-shadow:0 14px 40px rgba(0,0,0,.6); font-size:13.5px; line-height:1.5}
-.aviso.mal{border-color:var(--mal)}
-.aviso ul{margin:8px 0 0; padding-left:18px; color:var(--muted)}
 
-@media (max-width:760px){
-  .vista{padding:16px}
-  .cifras{gap:14px}
+.avisos{position:fixed; right:20px; bottom:20px; z-index:60;
+  display:flex; flex-direction:column; gap:9px; align-items:flex-end;
+  max-width:min(440px,calc(100vw - 32px)); pointer-events:none}
+.aviso{pointer-events:auto; background:var(--elev2); border:1px solid var(--linea2);
+  border-left:3px solid var(--cyan); border-radius:12px; padding:13px 15px;
+  box-shadow:var(--sombra); font-size:13.5px; line-height:1.5;
+  display:flex; gap:11px; align-items:flex-start; width:100%;
+  animation:entra .18s ease-out}
+@keyframes entra{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
+.aviso.mal{border-left-color:var(--mal)}
+.aviso.ok{border-left-color:var(--bien)}
+.aviso .cuerpo{flex:1; min-width:0}
+.aviso ul{margin:8px 0 0; padding-left:17px; color:var(--muted); font-size:12.5px}
+.aviso ul li{margin-bottom:4px}
+.aviso .cerrar{background:none; border:0; color:var(--dim); cursor:pointer;
+  font-size:16px; line-height:1; padding:2px 4px; border-radius:6px}
+.aviso .cerrar:hover{color:var(--fg)}
+
+/* ───────────────────────── carga ───────────────────────── */
+
+.cargando{display:flex; flex-direction:column; gap:8px}
+.hueso{height:62px; border-radius:var(--radio); border:1px solid var(--linea);
+  background:linear-gradient(90deg,var(--elev) 25%,var(--elev2) 37%,var(--elev) 63%);
+  background-size:400% 100%; animation:brillo 1.3s ease-in-out infinite}
+@keyframes brillo{0%{background-position:100% 0} 100%{background-position:0 0}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important; transition-duration:.01ms !important}
+}
+
+/* ───────────────────────── estrecho ───────────────────────── */
+
+@media (max-width:860px){
+  .barra{flex-wrap:wrap; gap:10px; padding:11px 16px}
+  .barra nav{order:3; width:100%; margin-left:0; overflow-x:auto}
+  .yo{margin-left:auto}
+  .vista{padding:18px 16px 60px}
+  .bloque{padding:16px}
+  .rueda{margin:0 -16px; padding:0 16px}
   .fila-evento{grid-template-columns:1fr}
-  .cifras{text-align:left}
-  table{font-size:13px}
+  .cifras{text-align:left; gap:16px}
+  .cabecera-vista h2{font-size:22px}
+  .acciones{width:100%}
+  .acciones > *{flex:1 1 auto; justify-content:center}
 }

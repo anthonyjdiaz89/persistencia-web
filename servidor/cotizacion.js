@@ -36,26 +36,32 @@ const sumarDias = (iso, dias) => {
   return f.toISOString().slice(0, 10);
 };
 
+// Días de una línea: ausente o en cero vale 1, para que las cotizaciones
+// hechas antes de que existiera la columna sigan sumando igual.
+const dias = (i) => Number(i.dias) || 1;
+const subtotal = (i) => (Number(i.cantidad) || 0) * dias(i) * (Number(i.valor_unitario) || 0);
+
 export function cotizacionHTML(cot, items = []) {
-  const total = items.reduce(
-    (t, i) => t + (Number(i.cantidad) || 0) * (Number(i.valor_unitario) || 0), 0);
+  const total = items.reduce((t, i) => t + subtotal(i), 0);
+
+  // La columna de días solo aparece si alguna línea dura más de uno. En una
+  // cotización de un día, una columna de unos es ruido.
+  const conDias = items.some((i) => dias(i) > 1);
 
   // Con un solo ítem la tabla sobra: el precio se dice y ya. Con varios, la
   // tabla ES el argumento, porque muestra en qué se va la plata.
   const variosItems = items.length > 1;
 
-  const filas = items.map((i) => {
-    const sub = (Number(i.cantidad) || 0) * (Number(i.valor_unitario) || 0);
-    return `<tr>
+  const filas = items.map((i) => `<tr>
       <td>
         <strong>${esc(i.concepto)}</strong>
         ${i.detalle ? `<span class="detalle">${esc(i.detalle)}</span>` : ''}
       </td>
       <td class="num">${Number(i.cantidad) || 0}</td>
+      ${conDias ? `<td class="num">${dias(i)}</td>` : ''}
       <td class="num">${pesos(i.valor_unitario)}</td>
-      <td class="num fuerte">${pesos(sub)}</td>
-    </tr>`;
-  }).join('');
+      <td class="num fuerte">${pesos(subtotal(i))}</td>
+    </tr>`).join('');
 
   const incluye = (cot.incluye || []).map((t) => `<li>${esc(t)}</li>`).join('');
   const condiciones = (cot.condiciones || []).map((t) => `<li>${esc(t)}</li>`).join('');
@@ -159,7 +165,7 @@ export function cotizacionHTML(cot, items = []) {
   ${variosItems ? `
   <h2>Detalle</h2>
   <table>
-    <thead><tr><th>Concepto</th><th class="num">Cant.</th><th class="num">Valor unitario</th><th class="num">Total</th></tr></thead>
+    <thead><tr><th>Concepto</th><th class="num">Cant.</th>${conDias ? '<th class="num">Días</th>' : ''}<th class="num">Valor unitario</th><th class="num">Total</th></tr></thead>
     <tbody>${filas}</tbody>
   </table>` : ''}
 
