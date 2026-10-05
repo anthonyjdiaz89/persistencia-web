@@ -1,0 +1,147 @@
+/* El panel usa los mismos tokens que la web: si no se pareciera al sitio,
+   no parecería de la misma casa. */
+
+:root{
+  --bg:#060609; --elev:#0c0c14; --elev2:#11111c;
+  --fg:#f4f5fa; --muted:#a8adc0; --dim:#6f7488;
+  --cyan:#4deeea; --purple:#7b4de0; --blue:#3d5afe; --magenta:#d94de8;
+  --linea:#1c1c28;
+  --bien:#4ade80; --mal:#f87171; --ojo:#fbbf24;
+  --radio:12px;
+}
+
+*{box-sizing:border-box}
+/* Sin esto, cualquier regla con `display` le gana al atributo `hidden` del
+   HTML y el elemento sigue visible aunque el DOM diga que está oculto.
+   Pasó con .puerta{display:grid}: el panel cargaba detrás del login. */
+[hidden]{display:none !important}
+html,body{margin:0; background:var(--bg); color:var(--fg);
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif; font-size:14px}
+button,input,select,textarea{font:inherit; color:inherit}
+a{color:inherit; text-decoration:none}
+
+.marca{font-weight:800; letter-spacing:.14em; font-size:12px; text-transform:uppercase}
+.marca span{background:linear-gradient(90deg,var(--cyan),var(--purple));
+  -webkit-background-clip:text; background-clip:text; color:transparent}
+.dim{color:var(--dim)}
+.error{color:var(--mal); min-height:20px; margin:8px 0 0; font-size:13px}
+
+/* ───────────────────────── entrada ───────────────────────── */
+.puerta{min-height:100vh; display:grid; place-items:center; padding:24px}
+.tarjeta-entrada{width:100%; max-width:340px; background:var(--elev);
+  border:1px solid var(--linea); border-radius:16px; padding:32px}
+.tarjeta-entrada h1{margin:14px 0 4px; font-size:26px; letter-spacing:-.02em}
+.tarjeta-entrada p{margin:0 0 20px; font-size:13px}
+.tarjeta-entrada input{width:100%; padding:13px 14px; background:var(--bg);
+  border:1px solid var(--linea); border-radius:10px; margin-bottom:12px}
+.tarjeta-entrada input:focus{outline:none; border-color:var(--cyan)}
+.tarjeta-entrada button{width:100%; padding:13px; border:0; border-radius:10px;
+  background:var(--cyan); color:#04121a; font-weight:700; cursor:pointer}
+
+/* ───────────────────────── armazón ───────────────────────── */
+.barra{position:sticky; top:0; z-index:10; display:flex; align-items:center;
+  gap:20px; padding:14px 24px; background:rgba(6,6,9,.88);
+  backdrop-filter:blur(10px); border-bottom:1px solid var(--linea)}
+.barra nav{display:flex; gap:4px; margin-left:12px}
+.pestana{background:none; border:0; padding:8px 14px; border-radius:8px;
+  color:var(--dim); cursor:pointer; font-weight:500}
+.pestana:hover{color:var(--fg)}
+.pestana.activa{background:var(--elev2); color:var(--fg)}
+#salir{margin-left:auto}
+
+.vista{max-width:1180px; margin:0 auto; padding:24px}
+.cabecera-vista{display:flex; justify-content:space-between; align-items:flex-end;
+  gap:16px; flex-wrap:wrap; margin-bottom:20px}
+.cabecera-vista h2{margin:0; font-size:24px; letter-spacing:-.02em}
+.cabecera-vista p{margin:4px 0 0; font-size:13px}
+.acciones{display:flex; gap:8px; flex-wrap:wrap}
+.volver{margin-bottom:14px}
+
+.boton,.plano{padding:9px 15px; border-radius:9px; border:1px solid transparent;
+  cursor:pointer; font-weight:600; font-size:13px; display:inline-block}
+.boton{background:var(--cyan); color:#04121a}
+.plano{background:var(--elev2); color:var(--fg); border-color:var(--linea)}
+.plano:hover{border-color:var(--dim)}
+label.boton{cursor:pointer}
+
+/* ───────────────────── tiras de totales ───────────────────── */
+.tiras{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+  gap:10px; margin-bottom:22px}
+.tira{background:var(--elev); border:1px solid var(--linea);
+  border-radius:var(--radio); padding:14px 16px}
+.tira .et{font-size:10.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--dim)}
+.tira .vl{font-size:21px; font-weight:800; letter-spacing:-.02em; margin-top:5px}
+.tira .pie{font-size:12px; color:var(--dim); margin-top:3px}
+.bien{color:var(--bien)} .mal{color:var(--mal)} .ojo{color:var(--ojo)}
+
+/* ───────────────────────── listas ───────────────────────── */
+.lista{display:flex; flex-direction:column; gap:8px}
+.fila-evento{display:grid; grid-template-columns:1fr auto; gap:14px;
+  background:var(--elev); border:1px solid var(--linea); border-radius:var(--radio);
+  padding:15px 18px; cursor:pointer; align-items:center}
+.fila-evento:hover{border-color:var(--dim)}
+.fila-evento h3{margin:0 0 3px; font-size:15.5px; font-weight:600}
+.fila-evento .sub{font-size:12.5px; color:var(--dim)}
+.cifras{display:flex; gap:22px; text-align:right; flex-wrap:wrap}
+.cifras .c .et{font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim)}
+.cifras .c .vl{font-weight:700; font-size:14.5px; white-space:nowrap}
+.marbete{display:inline-block; font-size:10.5px; letter-spacing:.08em;
+  text-transform:uppercase; padding:3px 8px; border-radius:999px;
+  background:var(--elev2); color:var(--muted); border:1px solid var(--linea)}
+
+/* ───────────────────────── bloques ───────────────────────── */
+.bloque{background:var(--elev); border:1px solid var(--linea);
+  border-radius:var(--radio); padding:18px; margin-bottom:16px}
+.cabecera-bloque{display:flex; justify-content:space-between; align-items:center;
+  gap:12px; margin-bottom:12px}
+.bloque h3{margin:0; font-size:15px; font-weight:600}
+.bloque h3 .dim{font-weight:400; font-size:13px}
+
+table{width:100%; border-collapse:collapse; font-size:13.5px}
+th{text-align:left; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--dim); font-weight:600; padding:0 8px 9px; border-bottom:1px solid var(--linea)}
+td{padding:4px 2px; border-bottom:1px solid var(--linea); vertical-align:middle}
+th.num,td.num{text-align:right}
+tfoot td{font-weight:700; border-bottom:0; padding-top:10px}
+.vacio{color:var(--dim); font-size:13px; padding:14px 2px}
+
+/* celdas que se editan en el sitio: sin modales ni formularios aparte */
+td input,td select{width:100%; background:transparent; border:1px solid transparent;
+  border-radius:7px; padding:8px; min-width:0}
+td input:hover,td select:hover{border-color:var(--linea)}
+td input:focus,td select:focus{outline:none; border-color:var(--cyan); background:var(--bg)}
+td input.num{text-align:right}
+td select{background:var(--bg); border-color:var(--linea); min-width:98px}
+.quitar{background:none; border:0; color:var(--dim); cursor:pointer;
+  font-size:17px; line-height:1; padding:6px 8px; border-radius:7px}
+.quitar:hover{color:var(--mal); background:var(--elev2)}
+.calc{color:var(--muted); white-space:nowrap; padding-right:8px}
+
+/* ───────────────────── editor de cotización ───────────────────── */
+.campos{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px}
+.campo label{display:block; font-size:10.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--dim); margin-bottom:5px}
+.campo input,.campo textarea,.campo select{width:100%; background:var(--bg);
+  border:1px solid var(--linea); border-radius:9px; padding:10px 12px}
+.campo input:focus,.campo textarea:focus{outline:none; border-color:var(--cyan)}
+.campo textarea{resize:vertical; min-height:76px; line-height:1.55}
+.campo.ancho{grid-column:1/-1}
+.listado-simple{display:flex; flex-direction:column; gap:6px}
+.listado-simple .renglon{display:flex; gap:6px; align-items:center}
+.listado-simple input{flex:1}
+
+/* ───────────────────────── avisos ───────────────────────── */
+.aviso{position:fixed; left:50%; bottom:26px; transform:translateX(-50%);
+  background:var(--elev2); border:1px solid var(--linea); border-radius:11px;
+  padding:13px 20px; max-width:min(560px,92vw); z-index:50;
+  box-shadow:0 14px 40px rgba(0,0,0,.6); font-size:13.5px; line-height:1.5}
+.aviso.mal{border-color:var(--mal)}
+.aviso ul{margin:8px 0 0; padding-left:18px; color:var(--muted)}
+
+@media (max-width:760px){
+  .vista{padding:16px}
+  .cifras{gap:14px}
+  .fila-evento{grid-template-columns:1fr}
+  .cifras{text-align:left}
+  table{font-size:13px}
+}

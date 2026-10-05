@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- El panel no se indexa: no es parte del sitio público. -->
+<meta name="robots" content="noindex, nofollow">
+<title>Panel · Persistencia Digital</title>
+<link rel="icon" href="/assets/isotipo.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/admin/panel.css">
+</head>
+<body>
+
+<!-- ───────────────────────── entrada ───────────────────────── -->
+<section id="puerta" class="puerta">
+  <form id="formEntrar" class="tarjeta-entrada">
+    <div class="marca"><span>Persistencia Digital</span></div>
+    <h1>Panel</h1>
+    <p class="dim">Presupuestos, ejecución y cotizaciones.</p>
+    <input type="password" id="clave" placeholder="clave" autocomplete="current-password" required>
+    <button type="submit">Entrar</button>
+    <p id="errorEntrar" class="error"></p>
+  </form>
+</section>
+
+<!-- ───────────────────────── panel ───────────────────────── -->
+<div id="panel" hidden>
+  <header class="barra">
+    <div class="marca"><span>Persistencia Digital</span></div>
+    <nav>
+      <button class="pestana activa" data-vista="eventos">Eventos</button>
+      <button class="pestana" data-vista="cotizaciones">Cotizaciones</button>
+    </nav>
+    <button id="salir" class="plano">Salir</button>
+  </header>
+
+  <!-- lista de eventos -->
+  <main id="vista-eventos" class="vista">
+    <div class="cabecera-vista">
+      <h2>Eventos</h2>
+      <div class="acciones">
+        <a class="boton plano" href="/api/excel">Descargar todo en Excel</a>
+        <button class="boton" id="nuevoEvento">Nuevo evento</button>
+      </div>
+    </div>
+    <div id="totalesGlobales" class="tiras"></div>
+    <div id="listaEventos" class="lista"></div>
+  </main>
+
+  <!-- ficha de un evento -->
+  <main id="vista-evento" class="vista" hidden>
+    <button class="plano volver" data-vista="eventos">← Eventos</button>
+    <div class="cabecera-vista">
+      <div>
+        <h2 id="evNombre"></h2>
+        <p class="dim" id="evMeta"></p>
+      </div>
+      <div class="acciones">
+        <a class="boton plano" id="evExcel" href="#">Excel</a>
+        <label class="boton plano">
+          Importar Excel<input type="file" id="evImportar" accept=".xlsx" hidden>
+        </label>
+        <button class="boton plano" id="evEditar">Datos</button>
+      </div>
+    </div>
+
+    <div id="evResumen" class="tiras"></div>
+    <div id="evAvisos"></div>
+
+    <section class="bloque">
+      <div class="cabecera-bloque">
+        <h3>Presupuesto <span class="dim">— lo proyectado</span></h3>
+        <button class="plano" data-agregar="presupuesto">+ línea</button>
+      </div>
+      <div id="tablaPresupuesto"></div>
+    </section>
+
+    <section class="bloque">
+      <div class="cabecera-bloque">
+        <h3>Real <span class="dim">— lo que de verdad entró y salió</span></h3>
+        <button class="plano" data-agregar="movimientos">+ movimiento</button>
+      </div>
+      <div id="tablaMovimientos"></div>
+    </section>
+
+    <section class="bloque">
+      <div class="cabecera-bloque">
+        <h3>Cobros <span class="dim">— facturado y pagado</span></h3>
+        <button class="plano" data-agregar="cobros">+ cobro</button>
+      </div>
+      <div id="tablaCobros"></div>
+    </section>
+
+    <section class="bloque">
+      <h3>Gasto por categoría</h3>
+      <div id="tablaCategorias"></div>
+    </section>
+  </main>
+
+  <!-- cotizaciones -->
+  <main id="vista-cotizaciones" class="vista" hidden>
+    <div class="cabecera-vista">
+      <h2>Cotizaciones</h2>
+      <button class="boton" id="nuevaCotizacion">Nueva cotización</button>
+    </div>
+    <div id="listaCotizaciones" class="lista"></div>
+  </main>
+
+  <!-- editor de cotización -->
+  <main id="vista-cotizacion" class="vista" hidden>
+    <button class="plano volver" data-vista="cotizaciones">← Cotizaciones</button>
+    <div class="cabecera-vista">
+      <h2>Cotización</h2>
+      <div class="acciones">
+        <a class="boton plano" id="cotVer" href="#" target="_blank" rel="noopener">Ver / imprimir</a>
+        <button class="boton plano" id="cotAEvento">Aprobada → evento</button>
+        <button class="boton" id="cotGuardar">Guardar</button>
+      </div>
+    </div>
+    <div id="cotFormulario"></div>
+  </main>
+</div>
+
+<div id="aviso" class="aviso" hidden></div>
+<script src="/admin/panel.js" type="module"></script>
+</body>
+</html>

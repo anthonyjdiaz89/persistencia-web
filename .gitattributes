@@ -1,0 +1,15 @@
+# Finales de linea LF en todo lo que se ejecuta dentro del contenedor.
+#
+# Esta anotado en la memoria de la casa: un archivo con CRLF no arranca dentro
+# de la imagen. Aqui no hay ningun .sh a proposito, pero el Dockerfile y el
+# servidor viajan igual al Linux del VPS y no tienen por que llevar retornos
+# de carro de Windows.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.webp binary
+*.glb binary
+*.mp4 binary
+*.mind binary
+*.tflite binary
+*.task binary

@@ -1,0 +1,15 @@
+{
+  "name": "pd-panel",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Panel de presupuestos, ejecución y cotizaciones de Persistencia Digital",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "express": "^4.21.2"
+  }
+}
