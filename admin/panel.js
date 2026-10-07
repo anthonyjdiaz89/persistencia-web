@@ -67,7 +67,14 @@ async function api(ruta, opciones = {}) {
     method: opciones.metodo || (opciones.cuerpo ? 'POST' : 'GET'),
     ...opciones.crudo,
   });
-  if (r.status === 401) { mostrarPuerta(); throw new Error('sin sesión'); }
+  // El 401 de cualquier ruta significa "se acabo la sesion" y manda a la
+  // puerta. El de /entrar NO: ahi significa "esa clave no es", y hay que
+  // decirlo con esas palabras. Mostrar "sin sesion" a quien esta intentando
+  // entrar no le dice nada de lo que le pasa.
+  if (r.status === 401 && ruta !== '/entrar') {
+    mostrarPuerta();
+    throw new Error('Se cerró la sesión. Entra otra vez.');
+  }
   const texto = await r.text();
   if (!r.ok) throw new Error(JSON.parse(texto || '{}').error || `HTTP ${r.status}`);
   return texto ? JSON.parse(texto) : null;
@@ -167,7 +174,13 @@ function pedirDatos({ titulo, nota, campos, ok = 'Guardar', validar }) {
       const v = {};
       campos.forEach((c) => {
         const el = $(`[name="${c.llave}"]`, forma);
-        v[c.llave] = c.tipo === 'number' ? Number(el.value) || 0 : el.value.trim();
+        // Una clave NO se recorta. El formulario de entrada manda lo que se
+        // teclea, espacios incluidos: si aqui se recortan, una clave pegada
+        // con un espacio al final se guarda distinta de como se escribe
+        // despues, y no vuelve a coincidir nunca. Costo una cuenta.
+        v[c.llave] = c.tipo === 'number' ? Number(el.value) || 0
+          : c.tipo === 'password' ? el.value
+          : el.value.trim();
       });
       return v;
     };
@@ -972,6 +985,52 @@ const ROLES = [
   { valor: 'lector', et: 'lector — solo mirar y descargar' },
 ];
 
+/**
+ * Una clave que se pueda dictar por teléfono.
+ *
+ * Sílabas y dígitos, sin l/I/1 ni O/0: lo que se manda por WhatsApp se acaba
+ * tecleando a mano, y una clave con caracteres que se confunden vuelve como
+ * «no me deja entrar». Son 4 sílabas y 4 dígitos — de sobra contra la fuerza
+ * bruta, que además paga 700 ms por intento.
+ */
+function claveGenerada() {
+  const con = 'bcdfgjkmnprstvz', voc = 'aeiou', dig = '23456789';
+  const azar = (abc, n) => [...crypto.getRandomValues(new Uint8Array(n))]
+    .map((b) => abc[b % abc.length]).join('');
+  const silaba = () => azar(con, 1) + azar(voc, 1);
+  return `${silaba()}${silaba()}-${azar(dig, 4)}-${silaba()}${silaba()}`;
+}
+
+/**
+ * Enseña la clave UNA vez.
+ *
+ * Es el paso que faltaba. La clave se guarda cifrada y no se puede volver a
+ * leer —eso es a propósito—, así que si no se ve aquí no se ve nunca, y la
+ * persona se queda fuera sin que nadie sepa por qué.
+ */
+function mostrarClave(correo, clave) {
+  return abrirDialogo(`
+    <h3>Clave de ${esc(correo)}</h3>
+    <p>Cópiala y mándasela ahora. No se puede volver a ver: queda cifrada en
+       la base, y lo único que se puede hacer después es generar otra.</p>
+    <div class="clave-nueva"><code>${esc(clave)}</code></div>
+    <div class="pies-dialogo">
+      <button type="button" class="plano" data-copiar>Copiar</button>
+      <button type="button" class="boton" data-primero data-listo>Ya la copié</button>
+    </div>`, (forma, terminar) => {
+    $('[data-copiar]', forma).addEventListener('click', async (ev) => {
+      try {
+        await navigator.clipboard.writeText(clave);
+        ev.target.textContent = 'Copiada';
+      } catch {
+        // Sin permiso de portapapeles queda a la vista, que es lo que importa.
+        ev.target.textContent = 'Cópiala a mano';
+      }
+    });
+    $('[data-listo]', forma).addEventListener('click', () => terminar(true));
+  });
+}
+
 async function cargarUsuarios() {
   cargando('#tablaUsuarios', 2);
   let us;
@@ -1001,12 +1060,15 @@ async function cargarUsuarios() {
         <td class="celda-texto dim">${u.ultimo_acceso
           ? fechaCorta(u.ultimo_acceso.slice(0, 10)) : 'nunca'}</td>
         <td class="num">
+          <button class="plano" data-clave="${u.id}">Clave nueva</button>
           <button class="plano" data-editar="${u.id}">Editar</button>
           <button class="quitar" data-borrar="${u.id}" aria-label="Borrar usuario">×</button>
         </td>
       </tr>`).join('')}</tbody>
     </table></div>` : `<p class="vacio">Sin usuarios todavía.</p>`;
 
+  $$('[data-clave]').forEach((b) => b.addEventListener('click', () =>
+    renovarClave(us.find((u) => u.id === b.dataset.clave))));
   $$('[data-editar]').forEach((b) => b.addEventListener('click', () =>
     editarUsuario(us.find((u) => u.id === b.dataset.editar))));
   $$('[data-borrar]').forEach((b) => b.addEventListener('click', () =>
@@ -1027,15 +1089,16 @@ const camposUsuario = (u = {}, nuevo) => [
   {
     llave: 'clave', et: nuevo ? 'Clave' : 'Clave nueva', tipo: 'password',
     valor: '', ancho: true, autocompletar: 'new-password',
-    pista: nuevo ? 'Mínimo 8 caracteres.'
+    pista: nuevo
+      ? 'Mínimo 8 caracteres. Déjalo vacío y te genero una, que podrás copiar.'
       : 'Déjalo vacío para no cambiar la clave que ya tiene.',
   },
 ];
 
-const validarUsuario = (nuevo) => (v) => {
+const validarUsuario = () => (v) => {
   if (!v.nombre) return 'Falta el nombre.';
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.correo)) return 'Ese correo no parece válido.';
-  if (nuevo && !v.clave) return 'Pon una clave para esta cuenta.';
+  // Vacia no es un error: en una cuenta nueva significa "genera una tu".
   if (v.clave && v.clave.length < 8) return 'La clave necesita al menos 8 caracteres.';
   return null;
 };
@@ -1050,25 +1113,51 @@ $('#nuevoUsuario').addEventListener('click', async () => {
   const v = await pedirDatos({
     titulo: 'Nuevo usuario',
     nota: 'La clave se guarda cifrada: ni yo ni nadie puede volver a leerla, solo cambiarla.',
-    campos: camposUsuario({}, true), ok: 'Crear', validar: validarUsuario(true),
+    campos: camposUsuario({}, true), ok: 'Crear', validar: validarUsuario(),
   });
   if (!v) return;
+  const generada = !v.clave;
+  if (generada) v.clave = claveGenerada();
   try {
     await api('/usuarios', { cuerpo: aFilaUsuario(v) });
-    avisar(`${v.nombre} ya puede entrar.`);
     cargarUsuarios();
+    // Siempre se ensena, se haya escrito o generado: es la unica ocasion de
+    // copiarla, y quien crea la cuenta tiene que poder mandarla.
+    await mostrarClave(v.correo, v.clave);
+    avisar(`${v.nombre} ya puede entrar.`);
   } catch (e) { fallar(e); }
 });
 
 async function editarUsuario(u) {
   if (!u) return;
   const v = await pedirDatos({
-    titulo: u.nombre, campos: camposUsuario(u, false), validar: validarUsuario(false),
+    titulo: u.nombre, campos: camposUsuario(u, false), validar: validarUsuario(),
   });
   if (!v) return;
   try {
     await api(`/usuarios/${u.id}`, { metodo: 'PUT', cuerpo: aFilaUsuario(v) });
     avisar(v.clave ? 'Datos y clave actualizados.' : 'Datos actualizados.');
+    cargarUsuarios();
+  } catch (e) { fallar(e); }
+}
+
+/** Para cuando alguien no puede entrar: clave nueva, a la vista una vez. */
+async function renovarClave(u) {
+  if (!u) return;
+  const si = await confirmar({
+    titulo: `Clave nueva para ${u.nombre}`,
+    texto: `Genero una clave y te la enseño para que se la mandes a ${u.correo}.`,
+    ojo: 'La que tuviera deja de funcionar en ese momento.',
+    ok: 'Generar',
+  });
+  if (!si) return;
+  const clave = claveGenerada();
+  try {
+    await api(`/usuarios/${u.id}`, {
+      metodo: 'PUT',
+      cuerpo: { nombre: u.nombre, correo: u.correo, rol: u.rol, activo: u.activo, clave },
+    });
+    await mostrarClave(u.correo, clave);
     cargarUsuarios();
   } catch (e) { fallar(e); }
 }
